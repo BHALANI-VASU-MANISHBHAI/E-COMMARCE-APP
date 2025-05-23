@@ -3,6 +3,7 @@ import assets from "../assets/assets.js";
 import axios from "axios";
 import { backendUrl } from "../App.jsx";
 import { toast } from "react-toastify";
+import { NavLink } from "react-router-dom";
 
 const Add = ({token}) => {
 
@@ -80,6 +81,28 @@ const Add = ({token}) => {
 
 
   return (
+<>
+    <div className=" md:hidden flex  gap-2 mb-4 flex-col">
+      <NavLink to="/add" className="flex gap-2 items-center border  py-2 px-2 max-w-100">
+       <div className=" flex gap-2 items-center   ">   
+        <img  className="w-5" src={assets.add_icon} alt="" />
+        <h1 className="text-md font-bold">Add Item</h1>
+       </div>
+       </NavLink>
+        <NavLink to="/list" className="flex gap-2 items-center border  py-2 px-2 max-w-100">
+       <div className="  flex gap-2 items-center   ">   
+        <img  className="w-5" src={assets.order_icon} alt="" />
+        <h1 className="text-md font-bold">List Item</h1>
+       </div>
+       </NavLink><NavLink to="/order" className="flex gap-2 items-center border  py-2 px-2 max-w-100">
+       <div className=" flex gap-2 items-center   ">   
+        <img  className="w-5" src={assets.order_icon} alt="" />
+        <h1 className="text-md font-bold"> Order Item</h1>
+       </div>
+       </NavLink>
+      
+    </div>
+
     <form onSubmit={onSubmitHandler}   className="flex flex-col w-full items-start  gap-3">
       <div>
         <p className="mb-2">Upload Image</p>
@@ -87,22 +110,22 @@ const Add = ({token}) => {
           {/* htmlFor  should match with id*/}
           {/* When you click the label (or anything inside it), it focuses or activates the associated input. */}
             <label htmlFor="image1">
-              <img src={!image1?assets.upload_area:URL.createObjectURL(image1)  } alt="" />
+              <img className="w-20"  src={!image1?assets.upload_area:URL.createObjectURL(image1)  } alt="" />
               <input onChange={(e)=>setImage1(e.target.files[0])} type="file" id="image1" hidden />
             </label>
 
           <label htmlFor="image2">
-            <img src={!image2?assets.upload_area:URL.createObjectURL(image2) } alt="" />
+            <img className="w-20"  src={!image2?assets.upload_area:URL.createObjectURL(image2) } alt="" />
             <input onChange={(e)=>setImage2(e.target.files[0])} type="file" id="image2" hidden />
           </label>
 
           <label htmlFor="image3">
-            <img src={!image3?assets.upload_area:URL.createObjectURL(image3) } alt="" />
+            <img className="w-20"  src={!image3?assets.upload_area:URL.createObjectURL(image3) } alt="" />
             <input  onChange={(e)=>setImage3(e.target.files[0])}type="file" id="image3" hidden />
           </label>
 
           <label htmlFor="image4">
-            <img src={!image4?assets.upload_area:URL.createObjectURL(image4) } alt="" />
+            <img className="w-20"  src={!image4?assets.upload_area:URL.createObjectURL(image4) } alt="" />
             <input onChange={(e)=>setImage4(e.target.files[0])} type="file" id="image4" hidden />
           </label>
         </div>
@@ -175,6 +198,7 @@ const Add = ({token}) => {
       <button type="submit" className="w-28 py-3 mt-4 bg-black text-white ">ADD</button>
 
     </form>
+    </>
   );
 };
 
