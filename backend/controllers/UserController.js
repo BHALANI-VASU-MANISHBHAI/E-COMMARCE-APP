@@ -19,7 +19,7 @@ const loginUser = async (req, res) => {
            const user = await userModel.findOne({email});
 
            if(!user){
-               return res.status(400).json({message:"User not found"});
+               return res.json({message:"User not found"});
            }
 
            const isMatch = await bcrypt.compare(password, user.password);
@@ -28,12 +28,12 @@ const loginUser = async (req, res) => {
                 const token = createdToken(user._id);
                 return res.status(200).json({success:true,token});
               }else{
-                return res.status(400).json({ success:false,message:"Invalid credentials"});
+                return res.json({ success:false,message:"Invalid credentials"});
               }
 
     }catch(err){
         console.log(err);
-        return res.status(500).json({success:false,message:err.message});
+        return res.json({success:false,message:err.message});
     }
 
 };
@@ -42,10 +42,9 @@ const loginUser = async (req, res) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
     const exist = await userModel.findOne({ email });
     if (exist) {
-      return res.status(400).json({success:false, message: "User already exists" });
+      return res.json({success:false, message: "User already exists" });
     }
 
     //validate email format
