@@ -1,11 +1,12 @@
-
+import orderModel from '../models/orderModel.js';
+import UserModel from '../models/userModel.js';
 
 
 //placing Order Using COD Method
 const placeOrder = async (req, res) => {
     try{
         const { userId, items, amount, address } = req.body;
-
+        console.log("placeOrder called with data:", req.body);
         if(!userId || !items || !amount || !address){
             return res.json({success: false, message: 'All fields are required'});
         }
@@ -42,12 +43,6 @@ const placeOrder = async (req, res) => {
 
 
 
-//placing Order Using Stripe Method
-const placeOrderStripe = async (req, res) => {
-
-
-}
-
 //Placing Order Using Razorpay Method
 const placeOrderRazorpay = async (req, res) => {
 
@@ -57,17 +52,40 @@ const placeOrderRazorpay = async (req, res) => {
 //ALL Orders Data for Admin Panel
 const allOrders = async (req, res) => {
 
+    try{
+        const orders  = await orderModel.find({});
+        
+        res.json({success: true, orders});
+    }catch(err){
+        console.log(err);
+        return res.json({success: false, message: err.message});
+    }
 }
 
 
 //User Order Data For Frontend
 const userOrders = async (req, res) => {
-
+ try{
+    const { userId } = req.body;
+    const orders = await orderModel.find({userId});
+    res.json({success: true, orders});
+ }catch(err){
+    console.log(err);
+    return res.json({success: false, message: err.message});
+ }
 }
 
 // update order status
 const updatedStatus = async (req, res) => {
+ try{
+    const {orderId, status} = req.body;
 
+    await orderModel.findByIdAndUpdate(orderId, {status});
+    res.json({success: true, message: "Order status updated successfully"});
+ }catch(err){
+    console.log(err);
+    return res.json({success: false, message: err.message});
+ }
 }
 
 
@@ -77,7 +95,7 @@ const updatedStatus = async (req, res) => {
 
 export {
     placeOrder,
-    placeOrderStripe,
+    
     placeOrderRazorpay,
     allOrders,
     userOrders,
