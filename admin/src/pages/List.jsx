@@ -33,7 +33,7 @@ const List = ({token}) => {
       const responce = await axios.post(url,{id}, {
         headers: {token}
       });
-      console.log(responce);
+      
       if (responce.data.success) {
         toast.success(responce.data.message);
          await fetchList();

@@ -95,4 +95,27 @@ const adminLogin = async (req, res) => {
 
 };
 
-export { loginUser, registerUser, adminLogin };
+
+//Get user data by Id
+
+const getUserDataById = async (req, res) => {
+  console.log("Request body:", req.body);
+try{
+
+   const { userId } = req.body;
+  
+    console.log("User ID:", userId); 
+   const user = await userModel.findById(userId);
+    console.log("User Data:", user);
+    if(!user){
+        return res.json({success:false,message:"User not found"});
+    }
+    return res.json({success:true,user});
+   
+}catch(err){
+    console.log(err);
+    return res.json({success:false,message:err.message});
+  }
+}
+
+export { loginUser, registerUser, adminLogin,getUserDataById };
