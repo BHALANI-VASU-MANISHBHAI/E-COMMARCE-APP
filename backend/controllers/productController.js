@@ -21,7 +21,7 @@
                 images.map(async (image) => {
                     // resorce_type is used to specify the type of resource being uploaded
                     //image.path is the path of the image file on the server
-                    const result = await cloudinary.uploader.upload(image.path, {resorce_type:'image'});
+                    const result = await cloudinary.uploader.upload(image.path, {resource_type:'image'});
                     // result.secure_url is the URL of the uploaded image on Cloudinary
                     console.log(result.secure_url);
                     return result.secure_url;

@@ -2,7 +2,7 @@ import validator from "validator";
 import userModel from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-
+import {v2 as cloudinary} from 'cloudinary';
 
 const createdToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -98,15 +98,15 @@ const adminLogin = async (req, res) => {
 
 //Get user data by Id
 
-const getUserDataById = async (req, res) => {
-  console.log("Request body:", req.body);
+const getUserById = async (req, res) => {
+
 try{
 
-   const { userId } = req.body;
-  
-    console.log("User ID:", userId); 
+    const userId= req.userId;
+
+
    const user = await userModel.findById(userId);
-    console.log("User Data:", user);
+
     if(!user){
         return res.json({success:false,message:"User not found"});
     }
@@ -118,4 +118,38 @@ try{
   }
 }
 
-export { loginUser, registerUser, adminLogin,getUserDataById };
+
+const UpdateProfile = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const profileImage = req.file;  // Single file comes in req.file
+    console.log("Profile Image:", profileImage);
+    if (!profileImage) {
+      return res.status(400).json({ success: false, message: "No file uploaded" });
+    }
+
+    console.log("User ID:", userId);
+    console.log("Profile Image Info:", profileImage);
+
+    // Upload single file to Cloudinary
+    const result = await cloudinary.uploader.upload(profileImage.path,{resource_type:'image'});
+
+
+    const imageUrl = result.secure_url;
+    console.log("Uploaded Image URL:", imageUrl); 
+    // Save image URL in the user's profile
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      { profilePhoto: imageUrl },
+      {new:true}
+    );
+    console.log("Updated User:", updatedUser);
+    res.json({ success: true, user: updatedUser });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
+export { loginUser, registerUser, adminLogin,getUserById,UpdateProfile };
