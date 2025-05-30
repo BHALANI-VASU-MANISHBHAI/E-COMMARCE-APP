@@ -1,6 +1,7 @@
 import orderModel from '../models/orderModel.js';
 import UserModel from '../models/userModel.js';
 import razorpayInstance from '../config/razorPay.js';
+import crypto from 'crypto';
 
 
 //placing Order Using COD Method
@@ -47,17 +48,22 @@ const placeOrder = async (req, res) => {
 
  const placeOrderRazorpay = async (req, res) => {
   try {
-    const { amount, currency, receipt, orderData } = req.body;
+    const { amount, currency = "INR", orderData } = req.body;
+
+    // ✅ Auto-generate unique receipt
+    const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     const options = {
-      amount: amount * 100, // in paisa
+      amount: amount * 100, // convert to paise
       currency,
       receipt,
     };
 
     const order = await razorpayInstance.orders.create(options);
 
-    if (!order) return res.status(500).json({ success: false, message: "Razorpay order failed" });
+    if (!order) {
+      return res.status(500).json({ success: false, message: "Razorpay order failed" });
+    }
 
     res.status(200).json({
       success: true,
@@ -66,25 +72,26 @@ const placeOrder = async (req, res) => {
       orderData
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ success: false, message: "Server error in Razorpay order" });
   }
 };
+
 
 const verifyOrderRazorpay = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData } = req.body;
 
     const sign = crypto
-      .createHmac("sha256", process.env.RAZORPAY_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(razorpay_order_id + "|" + razorpay_payment_id)
       .digest("hex");
 
     if (sign !== razorpay_signature) {
       return res.status(400).json({ success: false, message: "Invalid signature" });
     }
-
-    const newOrder = new OrderModel({
+    console.log("Payment verified successfully");
+    const newOrder = new orderModel({
       ...orderData,
       payment: {
         method: "razorpay",
@@ -92,7 +99,10 @@ const verifyOrderRazorpay = async (req, res) => {
         razorpay_payment_id,
         razorpay_signature,
       },
-      status: "processing",
+      paymentStatus: "success",
+      paymentMethod: "Razorpay",
+      date: orderData.date || new Date(),
+      userId: req.userId, // Ensure userId is set from the request
     });
 
     await newOrder.save();

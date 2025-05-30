@@ -20,7 +20,7 @@ orderRouter.post('/status', adminAuth, updatedStatus); //update order status
 //Payment Features
 orderRouter.post('/place',authUser, placeOrder); 
 orderRouter.post('/razorpay',authUser, placeOrderRazorpay);
-orderRouter.post('/razorpayverify', authUser, verifyOrderRazorpay); //create razorpay order
+orderRouter.post('/verify-order-razorpay', authUser, verifyOrderRazorpay); //create razorpay order
 
 
 //User Features
