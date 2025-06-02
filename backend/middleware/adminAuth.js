@@ -5,19 +5,20 @@ const adminAuth = (req, res, next) => {
 
 try{
      const {token} = req.headers;
-     console.log(token);
+     
         if(!token){
             return res.status(401).json({success:false,message:"Unauthorized"});
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            // console.log(decoded);
+        
         let value  = process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD;
-        // console.log(value);
+        
         if(decoded.id!=(process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD)){
+            console.log("Admin not authenticated");
             return res.status(401).json({success:false,message:"Unauthorized"});
         }
-
+        console.log("Admin Authenticated");
         next();
 }catch(err){
     console.log(err);

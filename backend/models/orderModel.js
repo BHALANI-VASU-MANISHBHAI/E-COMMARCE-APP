@@ -28,7 +28,7 @@ const orderSchema = new mongoose.Schema({
     required: true
   },
   payment: {
-    method: { type: String },                // e.g. "razorpay"
+    method: { type: String },                
     razorpay_order_id: { type: String },
     razorpay_payment_id: { type: String },
     razorpay_signature: { type: String }

@@ -17,8 +17,8 @@ const Orders = ({token}) => {
    
 
     try{
-      const responce  = await axios.post(backendUrl+"/api/order/list",{}, {headers:{token}});
-
+      const responce  = await axios.post(backendUrl+"/api/order/list",{"k":"L"}, {headers:{token}});
+      console.log("Response from fetchAllOrders: ", responce);
       if(responce.data.success){
         setOrders(responce.data.orders);
       }else{

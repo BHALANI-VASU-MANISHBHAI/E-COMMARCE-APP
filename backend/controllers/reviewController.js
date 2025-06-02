@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 import Review from "../models/reviewModel.js";
 import Order from "../models/orderModel.js";
-import { ObjectId } from 'bson';
-
 // Then use it like this:
 
 
@@ -12,32 +10,30 @@ import { ObjectId } from 'bson';
 const addReview = async (req, res) => {
   try {
     const userId = req.userId; // Assuming userId is set by authUser middleware
-    const { productId,  rating, comment } = req.body;
+    const { productId, rating, comment } = req.body;
     // console.log("addReview called with data:", req.body);
-const order = await Order.findOne({
-  userId,
-  'items._id': productId  
-}).populate('items._id', 'name price image');
+    const order = await Order.findOne({
+      userId,
+      "items._id": productId,
+    });
 
-
-if(!order) {
-  return res.json({ success: false, message: 'you not give review you not ordered item ' });
-}
+    if (!order) {
+      return res.json({
+        success: false,
+        message: "you not give review you not ordered item ",
+      });
+    }
     const reviewData = new Review({
       productId,
       userId,
       rating,
-      comment
+      comment,
     });
 
     const newReview = await Review.create(reviewData);
     await newReview.save();
 
-
-return res.json({ success: true, order });
- 
-    
-
+    return res.json({ success: true, order });
   } catch (err) {
     console.error(err);
     return res.json({ success: false, message: err.message });
@@ -60,9 +56,8 @@ const getReviews = async (req, res) => {
 
 const updateReview = async (req, res) => {
   try {
-    const { reviewId } = req.params;
-    console.log("updateReview called with reviewId:", reviewId);
-    const { rating, comment } = req.body;
+  
+    const { rating, comment , reviewId } = req.body;
  console.log("Update data:", req.body);
     const updatedReview = await Review.findByIdAndUpdate(reviewId,{
       rating,

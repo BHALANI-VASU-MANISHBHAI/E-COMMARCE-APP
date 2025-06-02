@@ -21,7 +21,12 @@ const placeOrder = async (req, res) => {
             address,
             status: 'Order Placed',
             paymentMethod: 'COD',
-            payment: false,
+            payment: {  
+                method: 'cod',
+                razorpay_order_id: null,
+                razorpay_payment_id: null,
+                razorpay_signature: null
+            },
             date: new Date()
         };
 
@@ -50,11 +55,11 @@ const placeOrder = async (req, res) => {
   try {
     const { amount, currency = "INR", orderData } = req.body;
 
-    // ✅ Auto-generate unique receipt
+  
     const receipt = `rcpt_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
     const options = {
-      amount: amount * 100, // convert to paise
+      amount: amount * 100, 
       currency,
       receipt,
     };
@@ -99,10 +104,11 @@ const verifyOrderRazorpay = async (req, res) => {
         razorpay_payment_id,
         razorpay_signature,
       },
+      status: "Order Placed",
       paymentStatus: "success",
       paymentMethod: "Razorpay",
       date: orderData.date || new Date(),
-      userId: req.userId, // Ensure userId is set from the request
+      userId: req.userId, 
     });
 
     await newOrder.save();
@@ -118,10 +124,10 @@ const verifyOrderRazorpay = async (req, res) => {
 
 //ALL Orders Data for Admin Panel
 const allOrders = async (req, res) => {
-
+    
     try{
         const orders  = await orderModel.find({});
-        
+
         res.json({success: true, orders});
     }catch(err){
         console.log(err);

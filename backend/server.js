@@ -9,6 +9,7 @@
         import orderRouter from './routes/orderRoute.js';
         import reviewRouter from './routes/reviewRoute.js';
         import razorpayInstance from './config/razorPay.js';
+        import SubscriberRoute from './routes/subscriberRoute.js';
 
 
         //App Config
@@ -30,6 +31,7 @@
         app.use('/api/cart', cartRouter);
         app.use('/api/order', orderRouter);
         app.use('/api/review', reviewRouter);
+        app.use('/api/subscriber', SubscriberRoute);
         
 
         app.get('/', (req, res) => {

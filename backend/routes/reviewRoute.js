@@ -10,7 +10,7 @@ const reviewRouter = express.Router();
 //Review Routes
 reviewRouter.post("/add", authUser, addReview); // Add a review
 reviewRouter.get("/get/:productId",  getReviews); // Get reviews for a product
-reviewRouter.put("/update/:reviewId", authUser, updateReview); // Update a review
+reviewRouter.put("/update", authUser, updateReview); // Update a review
 
 
 
