@@ -12,7 +12,7 @@ userRouter.post('/register', registerUser);
 userRouter.post('/login', loginUser);
 userRouter.post('/admin', adminLogin);
 userRouter.post('/getdataofuser', authUser,getUserById);
-userRouter.post('/profile', authUser, upload.single("profileImage"),
+userRouter.put('/updateprofile', authUser, upload.single("profileImage"),
  UpdateProfile);
 
 

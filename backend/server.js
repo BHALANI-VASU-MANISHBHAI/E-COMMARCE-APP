@@ -10,6 +10,7 @@
         import reviewRouter from './routes/reviewRoute.js';
         import razorpayInstance from './config/razorPay.js';
         import SubscriberRoute from './routes/subscriberRoute.js';
+        import otpRouter from './routes/otpRoute.js';
 
 
         //App Config
@@ -32,7 +33,7 @@
         app.use('/api/order', orderRouter);
         app.use('/api/review', reviewRouter);
         app.use('/api/subscriber', SubscriberRoute);
-        
+        app.use('/api/auth', otpRouter);
 
         app.get('/', (req, res) => {
         res.send('Hello World');

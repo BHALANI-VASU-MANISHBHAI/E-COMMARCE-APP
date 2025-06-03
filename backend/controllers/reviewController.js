@@ -11,16 +11,17 @@ const addReview = async (req, res) => {
   try {
     const userId = req.userId; // Assuming userId is set by authUser middleware
     const { productId, rating, comment } = req.body;
-    // console.log("addReview called with data:", req.body);
+
+    console.log("addReview called with data:", req.body);
     const order = await Order.findOne({
       userId,
       "items._id": productId,
     });
-
+    console.log("Order found:", order);
     if (!order) {
       return res.json({
         success: false,
-        message: "you not give review you not ordered item ",
+        message: "You can only review products from your orders.",
       });
     }
     const reviewData = new Review({
@@ -45,7 +46,7 @@ const getReviews = async (req, res) => {
   try {
     const { productId } = req.params; 
   
-    const reviews = await Review.find({ productId }).populate('userId', 'name email'); // Populate userId with name and email
+    const reviews = await Review.find({ productId }).populate('userId', 'name email profilePhoto');
     // console.log("Reviews found:", reviews);
     return res.json({ success: true, reviews });
   } catch (err) {

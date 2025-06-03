@@ -5,6 +5,17 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    firstName:{
+        type: String,
+        default: "",
+    },
+    lastName:{
+        type: String,
+        default: "",
+    },
+    gender:{
+        type: String,
+    },
     email:{
         type: String,
         required: true,
@@ -14,6 +25,14 @@ const userSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    phone:{
+        type: String,
+        default: "",
+    },
+    address:{
+        type: String,
+        default: "",
+    },
     cartData:{
         type: Object,
         default: {}
@@ -22,6 +41,7 @@ const userSchema = mongoose.Schema({
         type: String,
         default: "https://res.cloudinary.com/drezv2fgf/image/upload/v1748439973/Profile_avatar_placeholder_large_px5gio.png"
     },
+
 },{minimize:false, timestamps: true})
 //minimize:false is used to store empty objects in the database. By default, mongoose removes empty objects from the database.
 

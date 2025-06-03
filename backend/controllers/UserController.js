@@ -118,33 +118,34 @@ try{
   }
 }
 
-
 const UpdateProfile = async (req, res) => {
   try {
     const userId = req.userId;
-    const profileImage = req.file;  // Single file comes in req.file
-    console.log("Profile Image:", profileImage);
-    if (!profileImage) {
-      return res.status(400).json({ success: false, message: "No file uploaded" });
+    const profileImage = req.file; // optional
+    const { firstName, lastName, email, phone, gender } = req.body;
+
+    if (!firstName || !lastName || !email || !phone || !gender) {
+      return res.status(400).json({ success: false, message: "Please provide all required fields" });
     }
 
-    console.log("User ID:", userId);
-    console.log("Profile Image Info:", profileImage);
+    let updateData = {
+      firstName,
+      lastName,
+      email,
+      phone,
+      gender,
+    };
 
-    // Upload single file to Cloudinary
-    const result = await cloudinary.uploader.upload(profileImage.path,{resource_type:'image'});
+    // Only upload if user sent a new image
+    if (profileImage) {
+      const result = await cloudinary.uploader.upload(profileImage.path, { resource_type: 'image' });
+      updateData.profilePhoto = result.secure_url;
+      console.log("Image uploaded to Cloudinary:", result.secure_url);
+    }
 
-
-    const imageUrl = result.secure_url;
-    console.log("Uploaded Image URL:", imageUrl); 
-    // Save image URL in the user's profile
-    const updatedUser = await userModel.findByIdAndUpdate(
-      userId,
-      { profilePhoto: imageUrl },
-      {new:true}
-    );
-    console.log("Updated User:", updatedUser);
+    const updatedUser = await userModel.findByIdAndUpdate(userId, updateData, { new: true });
     res.json({ success: true, user: updatedUser });
+    
   } catch (err) {
     console.error(err);
     return res.status(500).json({ success: false, message: err.message });
