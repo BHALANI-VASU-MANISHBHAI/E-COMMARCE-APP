@@ -15,7 +15,6 @@ const List = ({token}) => {
       if (responce.data.success) {
         setList(responce.data.products);
       
-        console.log("Product list fetched successfully");
 
       } else {
         toast.error(responce.data.message);
@@ -66,7 +65,7 @@ const List = ({token}) => {
 
           {
             list.map((item,index)=>{
-              console.log(item);
+  
               return (
            <div className="grid grid-cols-[1fr_3fr_1fr] md:grid-cols-[1fr_3fr_1fr_1fr_1fr] gap-2 py-1 px-2 border text-sm items-center" key={index}>
 

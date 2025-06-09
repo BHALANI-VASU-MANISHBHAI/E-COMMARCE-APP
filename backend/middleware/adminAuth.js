@@ -15,10 +15,9 @@ try{
         let value  = process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD;
         
         if(decoded.id!=(process.env.ADMIN_EMAIL + process.env.ADMIN_PASSWORD)){
-            console.log("Admin not authenticated");
             return res.status(401).json({success:false,message:"Unauthorized"});
         }
-        console.log("Admin Authenticated");
+      
         next();
 }catch(err){
     console.log(err);

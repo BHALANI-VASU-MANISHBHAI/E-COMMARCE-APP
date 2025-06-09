@@ -7,7 +7,6 @@ import bcrypt from "bcrypt";
 async function storeOTP(req, res) {
   try {
     const { email } = req.body;
-    console.log(email);
 
     // Check if user exists
     const user = await UserModel.findOne({ email });
@@ -17,12 +16,12 @@ async function storeOTP(req, res) {
 
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log("Generated OTP:", otp);
+  
     // Save OTP in DB (remove old OTPs for this email first)
     await OTP.deleteMany({ email });
     const otpDoc = new OTP({ email, otp });
     await otpDoc.save();
-    console.log("OTP saved to DB:", otpDoc);
+
     // Send OTP email
     await sendOtpEmail(email, otp);
 

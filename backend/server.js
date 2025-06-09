@@ -1,6 +1,7 @@
         import express from 'express';
         import cors from 'cors';
         import dotenv from 'dotenv';
+        import compression from "compression";
         import connectDB from './config/mongodb.js';
         import cloudinary from './config/cloudinary.js';
         import userRouter from './routes/userRoute.js';
@@ -22,8 +23,11 @@
     
 
         //Middleware
+        app.use(compression({ threshold: 0 }));
         app.use(cors());
         app.use(express.json());
+        
+
 
 
         //API endpoints

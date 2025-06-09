@@ -23,7 +23,7 @@ const Add = ({token}) => {
 
 
   const onSubmitHandler = async (e) => {
-    console.log("submit");
+
     e.preventDefault();
     try {
       
@@ -42,21 +42,19 @@ const Add = ({token}) => {
       image2 &&formData.append("image2", image2);
       image3 &&formData.append("image3", image3);
       image4 &&formData.append("image4", image4);
-      for (let pair of formData.entries()) {
-      console.log(pair[0] + ": " + pair[1]);
-    }
+   
      
-      console.log(backendUrl);
+
       const url = backendUrl + "/api/product/add";
-      console.log(url);
+
       const responce  = await axios.post(backendUrl +"/api/product/add", formData,{
         headers:{token}
       });
-      console.log(responce);
+
 
       if(responce.data.success){
         toast.success(responce.data.message);
-        console.log("Product added successfully");
+
         setImage1(null);
         setImage2(null);
         setImage3(null);
@@ -70,7 +68,6 @@ const Add = ({token}) => {
         setSizes([]);
       }else{
         toast.error(responce.data.message);
-        console.log("Product not added");
       }
       
     } catch (err) {

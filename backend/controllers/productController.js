@@ -13,7 +13,7 @@
             const image2 =  req.files.image2  && req.files.image2[0];
             const image3 =  req.files.image3 && req.files.image3[0];
             const image4 =  req.files.image4 && req.files.image4[0];
-            console.log({image1, image2, image3, image4});   
+          
             const images = [image1, image2, image3, image4].filter((image) => image !== undefined);
             // Upload images to Cloudinary
             const imageUrls = await Promise.all(
@@ -23,7 +23,6 @@
                     //image.path is the path of the image file on the server
                     const result = await cloudinary.uploader.upload(image.path, {resource_type:'image'});
                     // result.secure_url is the URL of the uploaded image on Cloudinary
-                    console.log(result.secure_url);
                     return result.secure_url;
                 })
             );
@@ -86,23 +85,21 @@
 
 
     //function for  single product info
+const singleProduct = async (req, res) => {
+  try {
+    const productId = req.params.id; 
+    const product = await productModel.findById(productId);
 
-    const singleProduct = async (req, res) => {
-
-        try{
-            const {productId} = req.body;
-            const product = await productModel.findById(productId);
-            if(!product){
-                return res.status(404).json({ success:false, message: "Product not found"});
-            }
-
-            res.status(200).json({ success:true, product });
-        }catch(err){
-            console.log(err);
-            res.status(500).json({ success:false, message: err.message });
-        }
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
+    res.status(200).json({ success: true, product });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 
     export {

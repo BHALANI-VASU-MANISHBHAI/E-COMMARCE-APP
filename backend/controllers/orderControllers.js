@@ -9,7 +9,6 @@ const placeOrder = async (req, res) => {
     try{
         const userId = req.userId; 
         const {  items, amount, address } = req.body;
-        console.log("placeOrder called with data:", req.body);
         if(!userId || !items || !amount || !address){
             return res.json({success: false, message: 'All fields are required'});
         }

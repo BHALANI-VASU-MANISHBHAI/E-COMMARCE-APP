@@ -23,14 +23,37 @@ const addSubscriber = async (req, res) => {
 
 
 //get all subscribers
-const getAllSubscribers = async (req, res) => {
+// const getAllSubscribers = async (req, res) => {
+//   try {
+//     const subscribers = await Subscriber.find({});
+//     res.json({ success: true, subscribers });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ success: false, message:err.message });
+//   }
+// };
+
+// export { addSubscriber ,getAllSubscribers};
+
+
+//check if email is already subscribed
+const checkSubscriber = async (req, res) => {
   try {
-    const subscribers = await Subscriber.find({});
-    res.json({ success: true, subscribers });
+    const { email } = req.body;
+    console.log("Checking subscriber with email:", email);
+    // Check if already subscribed
+    const existing = await Subscriber
+      .findOne({ email });
+    console.log("Existing subscriber:", existing);
+    if (existing) {
+      return res.json({ success: true, message: "Already subscribed.", email: existing.email });
+    }
+    // If not subscribed, return success with no email
+    return res.json({ success: false, message: "Not subscribed.", email: null });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message:err.message });
+    res.json({ success: false, message: err.message });
   }
-};
+}
 
-export { addSubscriber ,getAllSubscribers};
+export { checkSubscriber,addSubscriber }; 

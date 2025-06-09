@@ -1,49 +1,53 @@
 import mongoose from "mongoose";
 
 const userSchema = mongoose.Schema({
-    name :{
+    name: {
         type: String,
         required: true,
     },
-    firstName:{
+    firstName: {
         type: String,
         default: "",
     },
-    lastName:{
+    lastName: {
         type: String,
         default: "",
     },
-    gender:{
+    gender: {
         type: String,
     },
-    email:{
+    email: {
         type: String,
         required: true,
         unique: true,
     },
-    password:{
+    password: {
         type: String,
-        required: true,
+        required: function () { return !this.googleId; }, // ✅ Conditionally required
     },
-    phone:{
-        type: String,
-        default: "",
-    },
-    address:{
+    googleId: { // ✅ Add this field
         type: String,
         default: "",
     },
-    cartData:{
+    phone: {
+        type: String,
+        default: "",
+        unique: true,
+    },
+    address: {
+        type: String,
+        default: "",
+    },
+    cartData: {
         type: Object,
-        default: {}
+        default: {},
     },
-    profilePhoto:{
+    profilePhoto: {
         type: String,
         default: "https://res.cloudinary.com/drezv2fgf/image/upload/v1748439973/Profile_avatar_placeholder_large_px5gio.png"
     },
 
-},{minimize:false, timestamps: true})
-//minimize:false is used to store empty objects in the database. By default, mongoose removes empty objects from the database.
+}, { minimize: false, timestamps: true });
 
-const UserModel =  mongoose.models.user ||  mongoose.model("User", userSchema);
+const UserModel = mongoose.models.user || mongoose.model("User", userSchema);
 export default UserModel;
