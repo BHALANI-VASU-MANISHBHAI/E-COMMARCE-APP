@@ -4,9 +4,13 @@ import axios from "axios";
 import { backendUrl } from "../App.jsx";
 import { toast } from "react-toastify";
 import { NavLink } from "react-router-dom";
-
+import { useNavigate } from "react-router-dom";
+import imageCompression from 'browser-image-compression';
 const Add = ({token}) => {
 
+
+
+ const navigate = useNavigate();
   const [image1, setImage1] = React.useState(null);
   const [image2, setImage2] = React.useState(null);
   const [image3, setImage3] = React.useState(null);
@@ -20,15 +24,40 @@ const Add = ({token}) => {
   const [subcategory , setSubcategory] = React.useState("Topwear");
   const [bestseller, setBestseller] = React.useState(false);
   const [sizes , setSizes] = React.useState([]);
+  const[adding, setAdding] = React.useState(false);
 
-
-  const onSubmitHandler = async (e) => {
-
-    e.preventDefault();
+   const compressImage = async (imageFile) => {
     try {
+      const options = {
+        maxSizeMB: 0.5,          // Maximum file size in MB
+        maxWidthOrHeight: 1024,   // Maximum width or height
+        useWebWorker: true       // Use web worker for faster compression
+      };
+      const compressedFile = await imageCompression(imageFile, options);
+      return compressedFile;
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      return imageFile; // Return original if compression fails
+    }
+  };
+  
+  
+  const onSubmitHandler = async (e) => {
+   
+     e.preventDefault();
+    try {
+      if(adding) return;
+      setAdding(true);
       
-      // FormData is a built-in JavaScript object that allows you to easily construct a set of key/value pairs representing form fields and their values.
       const formData = new FormData();
+
+      // Compress images before adding to formData
+      const compressedImages = await Promise.all([
+        image1 ? compressImage(image1) : null,
+        image2 ? compressImage(image2) : null,
+        image3 ? compressImage(image3) : null,
+        image4 ? compressImage(image4) : null
+      ]);
 
       formData.append("name", name);
       formData.append("description", description);
@@ -37,24 +66,19 @@ const Add = ({token}) => {
       formData.append("subCategory", subcategory);
       formData.append("bestseller", bestseller);
       formData.append("sizes", JSON.stringify(sizes));
+      
+      if(compressedImages[0]) formData.append("image1", compressedImages[0]);
+      if(compressedImages[1]) formData.append("image2", compressedImages[1]);
+      if(compressedImages[2]) formData.append("image3", compressedImages[2]);
+      if(compressedImages[3]) formData.append("image4", compressedImages[3]);
 
-      image1  && formData.append("image1", image1);
-      image2 &&formData.append("image2", image2);
-      image3 &&formData.append("image3", image3);
-      image4 &&formData.append("image4", image4);
-   
-     
-
-      const url = backendUrl + "/api/product/add";
-
-      const responce  = await axios.post(backendUrl +"/api/product/add", formData,{
-        headers:{token}
+      const response = await axios.post(backendUrl + "/api/product/add", formData, {
+        headers: { token }
       });
 
-
-      if(responce.data.success){
-        toast.success(responce.data.message);
-
+      if(response.data.success){
+        toast.success(response.data.message);
+        // Reset form (same as before)
         setImage1(null);
         setImage2(null);
         setImage3(null);
@@ -66,11 +90,15 @@ const Add = ({token}) => {
         setSubcategory("Topwear");
         setBestseller(false);
         setSizes([]);
-      }else{
-        toast.error(responce.data.message);
+        setTimeout(() => {
+          navigate("/list");
+        }, 1000);
+      } else {
+        setAdding(false);
+        toast.error(response.data.message);
       }
-      
     } catch (err) {
+      setAdding(false);
       console.log(err);
       toast.error("Something went wrong");
     }
@@ -193,7 +221,14 @@ const Add = ({token}) => {
         <label className="cursor-pointer" htmlFor="bestseller">Add to bestseller</label>
       </div>
 
-      <button type="submit" className="w-28 py-3 mt-4 bg-black text-white ">ADD</button>
+      <button 
+  type="submit" 
+  className={`w-28 py-3 mt-4 text-white ${adding ? 'bg-gray-500 cursor-not-allowed' : 'bg-black'}`} 
+  disabled={adding}
+>
+  {adding ? "Adding..." : "Add Product"}
+</button>
+
 
     </form>
     </>

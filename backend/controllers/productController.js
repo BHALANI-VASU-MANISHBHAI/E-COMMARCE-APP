@@ -8,7 +8,6 @@
     const addProduct = async (req, res) => {
         try{
             const {name, price, description, category,subCategory, sizes , bestSeller} = req.body; 
-        
             const image1 =  req.files.image1  && req.files.image1[0];
             const image2 =  req.files.image2  && req.files.image2[0];
             const image3 =  req.files.image3 && req.files.image3[0];
@@ -61,7 +60,7 @@
 
     const listProducts = async (req, res) => {
         try{
-            const products = await  productModel.find({});
+            const products = await  productModel.find({}).sort({updatedAt: -1});
             res.json({ success:true, products });
         }catch(err){
             console.log(err);
@@ -102,9 +101,63 @@ const singleProduct = async (req, res) => {
 };
 
 
+ const updateProduct = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const existingProduct = await productModel.findById(productId);
+        
+        if (!existingProduct) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        const { name, price, description, category, subCategory, sizes, bestseller } = req.body;
+        const image1 = req.files?.image1?.[0];
+        const image2 = req.files?.image2?.[0];
+        const image3 = req.files?.image3?.[0];
+        const image4 = req.files?.image4?.[0];
+
+        const newImages = [image1, image2, image3, image4].filter((image) => image !== undefined);
+
+        let imageUrls = existingProduct.image;
+
+        if (newImages.length > 0) {
+            const uploadedUrls = await Promise.all(
+                newImages.map(async (image) => {
+                    const result = await cloudinary.uploader.upload(image.path, { resource_type: 'image' });
+                    return result.secure_url;
+                })
+            );
+            imageUrls = uploadedUrls;
+        }
+
+        const productData = {
+            name,
+            price,
+            description,
+            category,
+            subCategory,
+            sizes: JSON.parse(sizes),
+            bestseller: bestseller === "true",
+            image: imageUrls,
+            date: Date.now()
+        };
+        console.log("productData ",productData);
+
+        const updatedProduct = await productModel.findByIdAndUpdate(productId, productData, { new: true });
+
+        res.status(200).json({ success: true, message: "Product updated successfully", product: updatedProduct });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+
+
     export {
         addProduct,
         listProducts,
         removeProduct,
-        singleProduct
+        singleProduct,
+        updateProduct
     }

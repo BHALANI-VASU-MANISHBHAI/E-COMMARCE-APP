@@ -3,7 +3,8 @@ import OTP from "../models/otpModel.js";
 import { sendOtpEmail } from "../services/emailService.js";
 import UserModel from "../models/userModel.js";
 import bcrypt from "bcrypt";
-
+import axios from "axios";
+const TWOFACTOR_API_KEY = process.env.TWOFACTOR_API_KEY;
 async function storeOTP(req, res) {
   try {
     const { email } = req.body;
@@ -87,4 +88,41 @@ const resetPassword = async (req, res) => {
   }
 };
 
-export { storeOTP, verifyOTP, resetPassword };
+const PhoneSentOTP = async (req, res) => {
+const { phone } = req.body;
+  if (!phone) return res.status(400).json({ success: false, message: "Phone number required" });
+
+  try {
+    const response = await axios.get(
+      `https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/${phone}/AUTOGEN`
+    );
+    if (response.data.Status === "Success") {
+      return res.json({ success: true, sessionId: response.data.Details });
+    } else {
+      return res.json({ success: false, message: "Failed to send OTP" });
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+const verifyPhoneOTP = async (req, res) => {
+  const { sessionId, otp } = req.body;
+  if (!sessionId || !otp) return res.status(400).json({ success: false, message: "Invalid data" });
+
+  try {
+    const response = await axios.get(
+      `https://2factor.in/API/V1/${TWOFACTOR_API_KEY}/SMS/VERIFY/${sessionId}/${otp}`
+    );
+    if (response.data.Status === "Success") {
+      return res.json({ success: true });
+    } else {
+      return res.json({ success: false, message: "OTP verification failed" });
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
+
+
+export { storeOTP, verifyOTP, resetPassword , PhoneSentOTP, verifyPhoneOTP };
