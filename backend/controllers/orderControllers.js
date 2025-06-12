@@ -4,6 +4,7 @@ import razorpayInstance from '../config/razorPay.js';
 import crypto from 'crypto';
 
 
+
 //placing Order Using COD Method
 const placeOrder = async (req, res) => {
     try{
@@ -139,7 +140,11 @@ const allOrders = async (req, res) => {
 const userOrders = async (req, res) => {
  try{
     const userId = req.userId;
-    const orders = await orderModel.find({userId});
+    const orders = await orderModel.find({userId
+      ,
+        status: { $ne: 'cancelled' } // Exclude cancelled orders
+    }).sort({date: -1});
+  
     res.json({success: true, orders});
  }catch(err){
     console.log(err);
@@ -159,9 +164,41 @@ const updatedStatus = async (req, res) => {
     return res.json({success: false, message: err.message});
  }
 }
+// Cancel a specific item in an order (by itemId and size)
+ const cancelOrderItem = async (req, res) => {
+  try {
+    const { orderId, itemId, size, reason } = req.body;
 
+    const order = await orderModel.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
 
+    // Filter out the item with the specific itemId and size
+    const updatedItems = order.items.filter(item => {
+      return !(item._id.toString() === itemId && item.size === size);
+    });
 
+    // If no items remain, mark the order as cancelled
+    if (updatedItems.length === 0) {
+      order.status = 'cancelled';
+      order.cancelledBy = 'user';
+      order.cancelledAt = new Date();
+      order.cancellationReason = reason || '';
+    }
+
+    order.items = updatedItems;
+
+    console.log("Updated Order after item cancellation:", order);
+
+    await order.save();
+
+    return res.json({ success: true, message: "Item cancelled successfully" });
+  } catch (error) {
+    console.error("Cancel order item error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
 
 
 
@@ -171,5 +208,6 @@ export {
     allOrders,
     userOrders,
     updatedStatus,
-    verifyOrderRazorpay
+    verifyOrderRazorpay,
+    cancelOrderItem
 }

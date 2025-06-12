@@ -4,7 +4,8 @@ import {    placeOrder,
     allOrders,
     userOrders,
     updatedStatus,
-    verifyOrderRazorpay
+    verifyOrderRazorpay,
+    cancelOrderItem
 }  from '../controllers/orderControllers.js';
 import adminAuth from '../middleware/adminAuth.js';
 import authUser from '../middleware/auth.js';
@@ -25,5 +26,7 @@ orderRouter.post('/verify-order-razorpay', authUser, verifyOrderRazorpay); //cre
 
 //User Features
 orderRouter.post('/userorders', authUser, userOrders); //get user orders
+orderRouter.post('/cancel', authUser, cancelOrderItem); //cancel order
+
 
 export default orderRouter;

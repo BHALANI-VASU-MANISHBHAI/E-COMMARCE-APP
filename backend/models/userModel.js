@@ -23,9 +23,9 @@ const userSchema = mongoose.Schema({
     },
     password: {
         type: String,
-        required: function () { return !this.googleId; }, // ✅ Conditionally required
+        required: function () { return !this.googleId; }, 
     },
-    googleId: { // ✅ Add this field
+    googleId: {
         type: String,
         default: "",
     },
@@ -33,6 +33,7 @@ const userSchema = mongoose.Schema({
         type: String,
         default: "",
         unique: true,
+        sparse: true
     },
     address: {
         type: String,

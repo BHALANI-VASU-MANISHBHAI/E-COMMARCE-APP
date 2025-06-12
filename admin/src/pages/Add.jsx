@@ -3,9 +3,9 @@ import assets from "../assets/assets.js";
 import axios from "axios";
 import { backendUrl } from "../App.jsx";
 import { toast } from "react-toastify";
-import { NavLink } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import imageCompression from 'browser-image-compression';
+
 const Add = ({token}) => {
 
 
@@ -108,26 +108,6 @@ const Add = ({token}) => {
 
   return (
 <>
-    <div className=" md:hidden flex  gap-2 mb-4 flex-col">
-      <NavLink to="/add" className="flex gap-2 items-center border  py-2 px-2 max-w-100">
-       <div className=" flex gap-2 items-center   ">   
-        <img  className="w-5" src={assets.add_icon} alt="" />
-        <h1 className="text-md font-bold">Add Item</h1>
-       </div>
-       </NavLink>
-        <NavLink to="/list" className="flex gap-2 items-center border  py-2 px-2 max-w-100">
-       <div className="  flex gap-2 items-center   ">   
-        <img  className="w-5" src={assets.order_icon} alt="" />
-        <h1 className="text-md font-bold">List Item</h1>
-       </div>
-       </NavLink><NavLink to="/order" className="flex gap-2 items-center border  py-2 px-2 max-w-100">
-       <div className=" flex gap-2 items-center   ">   
-        <img  className="w-5" src={assets.order_icon} alt="" />
-        <h1 className="text-md font-bold"> Order Item</h1>
-       </div>
-       </NavLink>
-      
-    </div>
 
     <form onSubmit={onSubmitHandler}   className="flex flex-col w-full items-start  gap-3">
       <div>
