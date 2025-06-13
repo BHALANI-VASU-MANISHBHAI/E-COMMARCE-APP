@@ -32,24 +32,22 @@ const placeOrder = async (req, res) => {
 
         const newOrder = await orderModel.create(orderData);
        
-         await newOrder.save();
+        await newOrder.save();
 
-         await UserModel.findByIdAndUpdate(userId, {cartData:{}}); 
-        
-         res.json({success:true , message:"Order placed successfully"});
+        await UserModel.findByIdAndUpdate(userId, {cartData:{}}); 
+
+        // Emit order placed event to the admin room
+        req.app.get('io').to('adminRoom').emit('orderPlaced', { orderId: newOrder._id, userId });
+
+
+        res.json({success:true , message:"Order placed successfully"});
      
 
     }catch(err){
         console.log(err);
         return res.json({success: false, message: err.message});
     }
-
-
 }
-
-
-
-
 
  const placeOrderRazorpay = async (req, res) => {
   try {
@@ -126,8 +124,9 @@ const verifyOrderRazorpay = async (req, res) => {
 const allOrders = async (req, res) => {
     
     try{
-        const orders  = await orderModel.find({});
-
+        const orders  = await orderModel.find({
+            status: { $ne: 'Cancelled' } // Exclude cancelled orders
+        }).sort({date:-1});
         res.json({success: true, orders});
     }catch(err){
         console.log(err);
@@ -152,54 +151,92 @@ const userOrders = async (req, res) => {
  }
 }
 
-// update order status
 const updatedStatus = async (req, res) => {
- try{
-    const {orderId, status} = req.body;
-
-    await orderModel.findByIdAndUpdate(orderId, {status});
-    res.json({success: true, message: "Order status updated successfully"});
- }catch(err){
-    console.log(err);
-    return res.json({success: false, message: err.message});
- }
-}
-// Cancel a specific item in an order (by itemId and size)
- const cancelOrderItem = async (req, res) => {
   try {
-    const { orderId, itemId, size, reason } = req.body;
+    const { orderId, status } = req.body;
 
-    const order = await orderModel.findById(orderId);
-    if (!order) {
+    // Update status and get updated order in one step
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true } // returns updated document
+    );
+
+    if (!updatedOrder) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    // Filter out the item with the specific itemId and size
-    const updatedItems = order.items.filter(item => {
-      return !(item._id.toString() === itemId && item.size === size);
-    });
+    console.log("Updated order status to:", status);
+    console.log("Order ID (user ID for socket):", updatedOrder.userId);
 
-    // If no items remain, mark the order as cancelled
-    if (updatedItems.length === 0) {
-      order.status = 'cancelled';
-      order.cancelledBy = 'user';
-      order.cancelledAt = new Date();
-      order.cancellationReason = reason || '';
+    // Notify specific user via socket
+    req.app.get('io').to(updatedOrder.userId.toString()).emit('orderStatusUpdated', { orderId, status });
+
+    res.json({ success: true, message: "Order status updated successfully" });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+const cancelOrderItem = async (req, res) => {
+  try {
+    const { orderId, itemId, size, reason } = req.body;
+
+    console.log("Order ID:", orderId, "Item ID:", itemId, "Size:", size);
+    console.log("User ID:", req.userId);
+
+    // Step 1: Fetch the exact item to be deleted using minimal fetch
+    const order = await orderModel.findOne(
+      { _id: orderId, userId: req.userId, 'items._id': itemId, 'items.size': size },
+      { 'items.$': 1, amount: 1 } // Minimal fetch: get only the matched item and order amount
+    );
+
+    if (!order || order.items.length === 0) {
+      return res.status(404).json({ success: false, message: "Order or item not found" });
     }
 
-    order.items = updatedItems;
+    const itemToDelete = order.items[0]; // Matched item
+    const deduction = itemToDelete.price * itemToDelete.quantity;
 
-    console.log("Updated Order after item cancellation:", order);
+    // Step 2: Remove the item and update the amount atomically
+    const updatedOrder = await orderModel.findOneAndUpdate(
+      { _id: orderId, userId: req.userId },
+      {
+        $pull: { items: { _id: itemId, size: size } },
+        $inc: { amount: -deduction }, // Atomic amount update
+        $set: {
+          cancelledBy: 'user',
+          cancelledAt: new Date(),
+          cancellationReason: reason || '',
+        }
+      },
+      { new: true }
+    );
 
-    await order.save();
+    if (!updatedOrder) {
+      return res.status(404).json({ success: false, message: "Order not found during update" });
+    }
+
+    // If all items are removed, cancel the order
+    if (updatedOrder.items.length === 0) {
+      updatedOrder.status = 'Cancelled';
+      await updatedOrder.save();
+    }
+
+    // Emit order cancellation to admin
+    req.app.get('io').to('adminRoom').emit('orderCancelled', { orderId: updatedOrder._id, userId: req.userId });
+
+    // Notify user via socket
+    req.app.get('io').to(req.userId.toString()).emit('orderCancelled', { orderId, itemId });
 
     return res.json({ success: true, message: "Item cancelled successfully" });
+
   } catch (error) {
     console.error("Cancel order item error:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
-
 
 
 export {

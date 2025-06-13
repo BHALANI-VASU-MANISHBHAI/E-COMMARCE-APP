@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { backendUrl } from '../App';
 import { toast } from 'react-toastify';
 import assets from '../assets/assets';
+import socket from '../services/socket';
+
+
 
 const Orders = ({ token }) => {
   const currency = "₹";
@@ -52,7 +55,7 @@ const Orders = ({ token }) => {
 
   const filterOrders = () => {
     let filtered = orders;
-
+    
     if (category !== 'All') {
       filtered = filtered.filter(order =>
         order.items.some(item => item.category === category)
@@ -71,9 +74,8 @@ const Orders = ({ token }) => {
 
     if (paymentStatus !== 'All') {
       filtered = filtered.filter(order =>
-        (paymentStatus === 'pending' && !order.payment) ||
-        (paymentStatus === 'success' && order.payment) ||
-        (paymentStatus === 'failed' && false) // Assuming no failed payments unless you track it
+        (paymentStatus === 'pending' ) ||
+        (paymentStatus === 'success') 
       );
     }
 
@@ -89,6 +91,7 @@ const Orders = ({ token }) => {
   };
 
   useEffect(() => {
+    if (!token) return;
     fetchAllOrders();
   }, [token]);
 
@@ -96,30 +99,57 @@ const Orders = ({ token }) => {
     filterOrders();
   }, [category, subCategory, status, paymentStatus, searchQuery, orders]);
 
+  useEffect(() => {
+  socket.emit('joinAdminRoom');
+
+  socket.on('orderCancelled', (data) => {
+    console.log('Order Cancelled:', data);
+    toast.info(`Order ${data.orderId} has been cancelled.`);
+    fetchAllOrders();
+  });
+  
+  socket.on('orderPlaced', (data) => {
+    console.log('Order Status Updated:', data);
+    toast.info(`Order ${data.orderId} status updated to ${data.status}.`);
+    fetchAllOrders();
+  });
+
+  return () => {
+    socket.off('orderCancelled');
+    socket.off('orderPlaced');
+    socket.disconnect();
+  };
+}, []);
+
   return (
     <div className="p-4">
       <h3 className="text-xl font-semibold mb-4">Orders Page</h3>
 
       {/* Filters */}
-      <div className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-gray-200 bg-gray-100 rounded-b-md">
-
+      <div className="p-4 flex flex-col md:flex-col lg:flex-row md:items-center md:justify-between gap-4 border border-gray-200 bg-gray-100 rounded-b-md" >
         {/* Category Selector */}
-        <div className="flex items-center gap-3">
+        <div className='flex items-center gap-5  flex-col items-start  md:gap-3 lg:gap-5  lg:justify-center lg:self-center  md:self-start md:flex-row sm:flex-col sm:items-start'> 
+        <div className="flex items-center gap-3 md:text-sm">
           <p>Category</p>
           <div className="flex items-center gap-2 relative">
             <b>{category}</b>
             <img
               onClick={() => setOpenCategory(!openCategory)}
               src={assets.dropdown_icon}
-              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${openCategory ? "rotate-90" : "rotate-0"}`}
+              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${
+                openCategory ? "rotate-90" : "rotate-0"
+              }`}
               alt=""
             />
             {openCategory && (
               <div className="absolute top-6 left-4 bg-white shadow-lg rounded-md p-2 z-10 w-24">
-                {["All", "Men", "Women", "Kids"].map(cat => (
+                {["All", "Men", "Women", "Kids"].map((cat) => (
                   <p
                     key={cat}
-                    onClick={() => { setCategory(cat); setOpenCategory(false); }}
+                    onClick={() => {
+                      setCategory(cat);
+                      setOpenCategory(false);
+                    }}
                     className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md"
                   >
                     {cat}
@@ -131,22 +161,27 @@ const Orders = ({ token }) => {
         </div>
 
         {/* SubCategory Selector */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 md:text-sm ">
           <p>SubCategory</p>
           <div className="flex items-center gap-2 relative">
             <b>{subCategory}</b>
             <img
               onClick={() => setOpenSubCategory(!openSubCategory)}
               src={assets.dropdown_icon}
-              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${openSubCategory ? "rotate-90" : "rotate-0"}`}
+              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${
+                openSubCategory ? "rotate-90" : "rotate-0"
+              }`}
               alt=""
             />
             {openSubCategory && (
               <div className="absolute top-6 left-4 bg-white shadow-lg rounded-md p-2 z-10 w-28">
-                {["All", "Bottomwear", "Topwear", "Winterwear"].map(sub => (
+                {["All", "Bottomwear", "Topwear", "Winterwear"].map((sub) => (
                   <p
                     key={sub}
-                    onClick={() => { setSubCategory(sub); setOpenSubCategory(false); }}
+                    onClick={() => {
+                      setSubCategory(sub);
+                      setOpenSubCategory(false);
+                    }}
                     className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md"
                   >
                     {sub}
@@ -158,48 +193,69 @@ const Orders = ({ token }) => {
         </div>
 
         {/* Status Selector */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 md:text-sm    ">
           <p>Status</p>
           <div className="flex items-center gap-2 relative">
             <b>{status}</b>
             <img
               onClick={() => setOpenStatus(!openStatus)}
               src={assets.dropdown_icon}
-              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${openStatus ? "rotate-90" : "rotate-0"}`}
+              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${
+                openStatus ? "rotate-90" : "rotate-0"
+              }`}
               alt=""
             />
-            {openStatus && (
-              <div className="absolute top-6 left-4 bg-white shadow-lg rounded-md p-2 z-10 w-32">
-                {["All", "OrderPlaced", "Packing", "Shipped", "Out for delivery", "Delivered"].map(stat => (
-  <p key={stat} onClick={() => { setStatus(stat); setOpenStatus(false); }}
-    className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md">
-    {stat}
-  </p>
-))}
+        {openStatus && (
+  <div className="absolute top-6 left-4 bg-white shadow-lg rounded-md p-2 z-10 w-32">
+    {[
+      "All",
+      "Order Placed",
+      "Shipped",
+      "Delivered",
+      "Cancelled",
+      "Out for delivery",
+      "Packing"
+    ].map((stat) => (
+      <p
+        key={stat}
+        onClick={() => {
+          setStatus(stat);
+          setOpenStatus(false); // You probably want to close the dropdown here
+        }}
+        className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md"
+      >
+        {stat}
+      </p>
+    ))}
+  </div>
+)}
 
-              </div>
-            )}
           </div>
         </div>
 
         {/* Payment Status Selector */}
-        <div className="flex items-center gap-3">
-          <p>Payment</p>
+        <div className="flex items-center gap-3 md:text-sm ">
+          <p className  >Payment</p>
           <div className="flex items-center gap-2 relative">
             <b>{paymentStatus}</b>
             <img
               onClick={() => setOpenPaymentStatus(!openPaymentStatus)}
               src={assets.dropdown_icon}
-              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${openPaymentStatus ? "rotate-90" : "rotate-0"}`}
+              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${
+                openPaymentStatus ? "rotate-90" : "rotate-0"
+              }`}
               alt=""
             />
             {openPaymentStatus && (
               <div className="absolute top-6 left-4 bg-white shadow-lg rounded-md p-2 z-10 w-24">
-                {["All", "pending", "success", "failed"].map(pay => (
+                {["All", "pending", "success"].map((pay) => (
                   <p
                     key={pay}
-                    onClick={() => { setPaymentStatus(pay); setOpenPaymentStatus(false); }}
-                    className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md"
+                    onClick={() => {
+                      setPaymentStatus(pay);
+                      setOpenPaymentStatus(false);
+                    }}
+                    className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md "
                   >
                     {pay}
                   </p>
@@ -208,9 +264,9 @@ const Orders = ({ token }) => {
             )}
           </div>
         </div>
-
+            </div>
         {/* Search Bar */}
-        <div className="p-2 flex gap-3 items-center relative sm:p-0 md:p-4">
+        <div className="p-3 flex gap-3 items-center relative sm:p-4 md:p-4 self-start md:text-sm lg:text-base ">
           <img
             className="absolute w-4 left-6 top-1/2 transform -translate-y-1/2"
             src={assets.search_icon}
@@ -221,44 +277,77 @@ const Orders = ({ token }) => {
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border pl-10 pr-2 py-1 rounded-md md:w-64  sm:w-50" 
+            className="border pl-10 pr-2 py-1 rounded-md w-50 md:w-35"
           />
         </div>
-
       </div>
 
       {/* Orders Display */}
       <div>
         {filteredOrders.map((order, index) => (
-          <div key={index} className="grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr] lg:grid-cols-[0.5fr_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-xs sm:text-md text-gray-700">
-            <img src={assets.parcel_icon} alt="" className="w-12 object-cover" />
+          <div
+            key={index}
+            className="grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr] lg:grid-cols-[0.5fr_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-xs sm:text-md text-gray-700"
+          >
+            <img
+              src={assets.parcel_icon}
+              alt=""
+              className="w-12 object-cover"
+            />
             <div>
               <div>
                 {order.items.map((item, idx) => (
-                  <p className='py-0.5' key={idx}>
-                    {item.name} X {item.quantity} <span>{item.size}</span>{idx !== order.items.length - 1 && ','}
+                  <p className="py-0.5" key={idx}>
+                    {item.name} X {item.quantity} <span>{item.size}</span>
+                    {idx !== order.items.length - 1 && ","}
                   </p>
                 ))}
               </div>
-              <p className='mt-3 mb-2 font-medium'>{order.address.firstName + " " + order.address.lastName}</p>
+              <p className="mt-3 mb-2 font-medium">
+                {order.address.firstName + " " + order.address.lastName}
+              </p>
               <div>
                 <p>{order.address.street + ","}</p>
-                <p>{order.address.city + ", " + order.address.state + ", " + order.address.country + ", " + order.address.zipcode}</p>
+                <p>
+                  {order.address.city +
+                    ", " +
+                    order.address.state +
+                    ", " +
+                    order.address.country +
+                    ", " +
+                    order.address.zipcode}
+                </p>
               </div>
               <p>{order.address.phone}</p>
             </div>
 
             <div>
-              <p className='text-sm sm:text-[15px]'>Items: {order.items.length}</p>
-              <p className='mt-3'>Method: {order.paymentMethod}</p>
-              <p>Payment: {order.payment ? 'Done' : 'Pending'}</p>
+              <p className="text-sm sm:text-[15px]">
+                Items: {order.items.length}
+              </p>
+              <p className="mt-3">Method: {order.paymentMethod}</p>
+             <p>
+  Payment: {order.paymentStatus === "success" 
+              ? "Done" 
+              : order.paymentStatus === "failed" 
+              ? "Failed" 
+              : "Pending"}
+</p>
+
               <p>Date: {new Date(order.date).toLocaleDateString()}</p>
             </div>
 
-            <p className='text-sm sm:text-[15px]'>{currency}{order.amount}</p>
+            <p className="text-sm sm:text-[15px]">
+              {currency}
+              {order.amount}
+            </p>
 
-            <select onChange={(event) => statusHandler(event, order._id)} value={order.status} className='p-2 font-semibold'>
-              <option value="OrderPlaced">Order Placed</option>
+            <select 
+              onChange={(event) => statusHandler(event, order._id)}
+              value={order.status}
+              className="p-2 font-semibold"
+            >
+              <option value="Order Placed">Order Placed</option>
               <option value="Packing">Packing</option>
               <option value="Shipped">Shipped</option>
               <option value="Out for delivery">Out for delivery</option>
