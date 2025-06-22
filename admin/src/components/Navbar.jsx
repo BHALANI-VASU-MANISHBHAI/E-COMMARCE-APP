@@ -1,13 +1,11 @@
 import React from "react";
 import assets from "../assets/assets.js";
 import { NavLink } from "react-router-dom";
-import { GlobalContext } from "../contexts/GlobalContext.jsx";
 import { useContext } from "react";
 
 const Navbar = () => {
   const [Sidebar, setSidebar] = React.useState(false);
 
-  const { Searchbar, setSearchbar } = React.useContext(GlobalContext);
 
   const handleLogout = () => {
     localStorage.removeItem("token");

@@ -31,7 +31,6 @@ const userSchema = mongoose.Schema({
     },
     phone: {
         type: String,
-        default: "",
         unique: true,
         sparse: true
     },
@@ -47,6 +46,13 @@ const userSchema = mongoose.Schema({
         type: String,
         default: "https://res.cloudinary.com/drezv2fgf/image/upload/v1748439973/Profile_avatar_placeholder_large_px5gio.png"
     },
+
+    // ✅ Add role here
+    role: {
+        type: String,
+        enum: ["user", "admin"],
+        default: "user"
+    }
 
 }, { minimize: false, timestamps: true });
 

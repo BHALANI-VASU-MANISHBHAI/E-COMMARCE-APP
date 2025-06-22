@@ -19,7 +19,7 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Order Placed', 'Shipped', 'Delivered', 'Cancelled','Out for delivery','Packing'],
+    enum: ['Order Placed', 'Shipped', 'Delivered', 'Cancelled', 'Out for delivery', 'Packing'],
     default: 'Order Placed',
     required: true
   },
@@ -42,11 +42,9 @@ const orderSchema = new mongoose.Schema({
     type: Date, 
     required: true 
   },
-
-  // ✅ New fields for cancellation tracking:
   cancelledBy: {
     type: String,
-    enum: ['user', 'admin', 'system', null], // Add 'system' if you plan to auto-cancel unpaid orders
+    enum: ['user', 'admin', 'system', null],
     default: null
   },
   cancelledAt: { 
@@ -58,6 +56,9 @@ const orderSchema = new mongoose.Schema({
     default: '' 
   }
 });
+
+// ✅ Add this: Compound index on paymentStatus and status
+orderSchema.index({ paymentStatus: 1, status: 1 });
 
 const orderModel = mongoose.model("order", orderSchema);
 export default orderModel;

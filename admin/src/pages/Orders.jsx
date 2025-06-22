@@ -1,49 +1,44 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import { backendUrl } from '../App';
-import { toast } from 'react-toastify';
-import assets from '../assets/assets';
-import socket from '../services/socket';
-
-
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { backendUrl } from "../App";
+import { toast } from "react-toastify";
+import assets from "../assets/assets";
+import { useContext } from "react";
+import { OrderContext } from "../contexts/OrderContext";
 
 const Orders = ({ token }) => {
   const currency = "₹";
+  const { orders, fetchAllOrders } = useContext(OrderContext);
 
-  const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
-
-  const [category, setCategory] = useState('All');
-  const [subCategory, setSubCategory] = useState('All');
-  const [status, setStatus] = useState('All');
-  const [paymentStatus, setPaymentStatus] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [category, setCategory] = useState("All");
+  const [subCategory, setSubCategory] = useState("All");
+  const [status, setStatus] = useState("All");
+  const [paymentStatus, setPaymentStatus] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [openCategory, setOpenCategory] = useState(false);
   const [openSubCategory, setOpenSubCategory] = useState(false);
   const [openStatus, setOpenStatus] = useState(false);
   const [openPaymentStatus, setOpenPaymentStatus] = useState(false);
 
-  const fetchAllOrders = async () => {
-    if (!token) return;
-
-    try {
-      const response = await axios.post(backendUrl + "/api/order/list", { k: "L" }, { headers: { token } });
-      if (response.data.success) {
-        setOrders(response.data.orders);
-        setFilteredOrders(response.data.orders);
-      } else {
-        toast.error(response.data.message);
-      }
-    } catch (err) {
-      console.log("Error fetching orders: ", err);
-      toast.error("Error fetching orders");
-    }
+  const statusFlow = {
+    "Order Placed": ["Packing"],
+    Packing: ["Shipped"],
+    Shipped: ["Out for delivery"],
+    "Out for delivery": ["Delivered"],
+    Delivered: [],
   };
+
+  const stepperSteps = ["Order Placed", "Packing", "Shipped", "Out for delivery", "Delivered"];
 
   const statusHandler = async (event, orderId) => {
     try {
-      const response = await axios.post(backendUrl + "/api/order/status", { orderId, status: event.target.value }, { headers: { token } });
+      const response = await axios.post(
+        backendUrl + "/api/order/status",
+        { orderId, status: event.target.value },
+        { headers: { token } }
+      );
       if (response.data.success) {
         await fetchAllOrders();
       }
@@ -55,33 +50,32 @@ const Orders = ({ token }) => {
 
   const filterOrders = () => {
     let filtered = orders;
-    
-    if (category !== 'All') {
-      filtered = filtered.filter(order =>
-        order.items.some(item => item.category === category)
+
+    if (category !== "All") {
+      filtered = filtered.filter((order) =>
+        order.items.some((item) => item.category === category)
       );
     }
 
-    if (subCategory !== 'All') {
-      filtered = filtered.filter(order =>
-        order.items.some(item => item.subCategory === subCategory)
+    if (subCategory !== "All") {
+      filtered = filtered.filter((order) =>
+        order.items.some((item) => item.subCategory === subCategory)
       );
     }
 
-    if (status !== 'All') {
-      filtered = filtered.filter(order => order.status === status);
+    if (status !== "All") {
+      filtered = filtered.filter((order) => order.status === status);
     }
 
-    if (paymentStatus !== 'All') {
-      filtered = filtered.filter(order =>
-        (paymentStatus === 'pending' ) ||
-        (paymentStatus === 'success') 
+    if (paymentStatus !== "All") {
+      filtered = filtered.filter(
+        (order) => paymentStatus === "pending" || paymentStatus === "success"
       );
     }
 
-    if (searchQuery.trim() !== '') {
-      filtered = filtered.filter(order =>
-        order.items.some(item =>
+    if (searchQuery.trim() !== "") {
+      filtered = filtered.filter((order) =>
+        order.items.some((item) =>
           item.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
       );
@@ -91,53 +85,26 @@ const Orders = ({ token }) => {
   };
 
   useEffect(() => {
-    if (!token) return;
-    fetchAllOrders();
-  }, [token]);
-
-  useEffect(() => {
     filterOrders();
   }, [category, subCategory, status, paymentStatus, searchQuery, orders]);
-
-  useEffect(() => {
-  socket.emit('joinAdminRoom');
-
-  socket.on('orderCancelled', (data) => {
-    console.log('Order Cancelled:', data);
-    toast.info(`Order ${data.orderId} has been cancelled.`);
-    fetchAllOrders();
-  });
-  
-  socket.on('orderPlaced', (data) => {
-    console.log('Order Status Updated:', data);
-    toast.info(`Order ${data.orderId} status updated to ${data.status}.`);
-    fetchAllOrders();
-  });
-
-  return () => {
-    socket.off('orderCancelled');
-    socket.off('orderPlaced');
-    socket.disconnect();
-  };
-}, []);
 
   return (
     <div className="p-4">
       <h3 className="text-xl font-semibold mb-4">Orders Page</h3>
 
       {/* Filters */}
-      <div className="p-4 flex flex-col md:flex-col lg:flex-row md:items-center md:justify-between gap-4 border border-gray-200 bg-gray-100 rounded-b-md" >
-        {/* Category Selector */}
-        <div className='flex items-center gap-5  flex-col items-start  md:gap-3 lg:gap-5  lg:justify-center lg:self-center  md:self-start md:flex-row sm:flex-col sm:items-start'> 
-        <div className="flex items-center gap-3 md:text-sm">
-          <p>Category</p>
+      {/* You can keep your filter code here (unchanged) */}
+  <div className="p-4 flex flex-col lg:flex-row md:items-center md:justify-between gap-4 border border-gray-200 bg-gray-100 rounded-b-md">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Category Filter */}
           <div className="flex items-center gap-2 relative">
+            <p>Category</p>
             <b>{category}</b>
             <img
               onClick={() => setOpenCategory(!openCategory)}
               src={assets.dropdown_icon}
-              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${
-                openCategory ? "rotate-90" : "rotate-0"
+              className={`h-3 w-2 cursor-pointer transform ${
+                openCategory ? "rotate-90" : ""
               }`}
               alt=""
             />
@@ -150,7 +117,7 @@ const Orders = ({ token }) => {
                       setCategory(cat);
                       setOpenCategory(false);
                     }}
-                    className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md"
+                    className="hover:bg-gray-300 cursor-pointer p-1 rounded-md"
                   >
                     {cat}
                   </p>
@@ -158,18 +125,16 @@ const Orders = ({ token }) => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* SubCategory Selector */}
-        <div className="flex items-center gap-3 md:text-sm ">
-          <p>SubCategory</p>
+          {/* SubCategory Filter */}
           <div className="flex items-center gap-2 relative">
+            <p>SubCategory</p>
             <b>{subCategory}</b>
             <img
               onClick={() => setOpenSubCategory(!openSubCategory)}
               src={assets.dropdown_icon}
-              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${
-                openSubCategory ? "rotate-90" : "rotate-0"
+              className={`h-3 w-2 cursor-pointer transform ${
+                openSubCategory ? "rotate-90" : ""
               }`}
               alt=""
             />
@@ -182,7 +147,7 @@ const Orders = ({ token }) => {
                       setSubCategory(sub);
                       setOpenSubCategory(false);
                     }}
-                    className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md"
+                    className="hover:bg-gray-300 cursor-pointer p-1 rounded-md"
                   >
                     {sub}
                   </p>
@@ -190,59 +155,54 @@ const Orders = ({ token }) => {
               </div>
             )}
           </div>
-        </div>
 
-        {/* Status Selector */}
-        <div className="flex items-center gap-3 md:text-sm    ">
-          <p>Status</p>
+          {/* Status Filter */}
           <div className="flex items-center gap-2 relative">
+            <p>Status</p>
             <b>{status}</b>
             <img
               onClick={() => setOpenStatus(!openStatus)}
               src={assets.dropdown_icon}
-              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${
-                openStatus ? "rotate-90" : "rotate-0"
+              className={`h-3 w-2 cursor-pointer transform ${
+                openStatus ? "rotate-90" : ""
               }`}
               alt=""
             />
-        {openStatus && (
-  <div className="absolute top-6 left-4 bg-white shadow-lg rounded-md p-2 z-10 w-32">
-    {[
-      "All",
-      "Order Placed",
-      "Shipped",
-      "Delivered",
-      "Cancelled",
-      "Out for delivery",
-      "Packing"
-    ].map((stat) => (
-      <p
-        key={stat}
-        onClick={() => {
-          setStatus(stat);
-          setOpenStatus(false); // You probably want to close the dropdown here
-        }}
-        className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md"
-      >
-        {stat}
-      </p>
-    ))}
-  </div>
-)}
-
+            {openStatus && (
+              <div className="absolute top-6 left-4 bg-white shadow-lg rounded-md p-2 z-10 w-32">
+                {[
+                  "All",
+                  "Order Placed",
+                  "Shipped",
+                  "Delivered",
+                  "Cancelled",
+                  "Out for delivery",
+                  "Packing",
+                ].map((stat) => (
+                  <p
+                    key={stat}
+                    onClick={() => {
+                      setStatus(stat);
+                      setOpenStatus(false);
+                    }}
+                    className="hover:bg-gray-300 cursor-pointer p-1 rounded-md"
+                  >
+                    {stat}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
 
-        {/* Payment Status Selector */}
-        <div className="flex items-center gap-3 md:text-sm ">
-          <p className  >Payment</p>
+          {/* Payment Filter */}
           <div className="flex items-center gap-2 relative">
+            <p>Payment</p>
             <b>{paymentStatus}</b>
             <img
               onClick={() => setOpenPaymentStatus(!openPaymentStatus)}
               src={assets.dropdown_icon}
-              className={`h-3 w-2 cursor-pointer transform transition-transform duration-300 ${
-                openPaymentStatus ? "rotate-90" : "rotate-0"
+              className={`h-3 w-2 cursor-pointer transform ${
+                openPaymentStatus ? "rotate-90" : ""
               }`}
               alt=""
             />
@@ -255,7 +215,7 @@ const Orders = ({ token }) => {
                       setPaymentStatus(pay);
                       setOpenPaymentStatus(false);
                     }}
-                    className="hover:bg-gray-300 hover:text-gray-800 cursor-pointer p-1 rounded-md "
+                    className="hover:bg-gray-300 cursor-pointer p-1 rounded-md"
                   >
                     {pay}
                   </p>
@@ -264,9 +224,9 @@ const Orders = ({ token }) => {
             )}
           </div>
         </div>
-            </div>
-        {/* Search Bar */}
-        <div className="p-3 flex gap-3 items-center relative sm:p-4 md:p-4 self-start md:text-sm lg:text-base ">
+
+        {/* Search Box */}
+        <div className="p-3 flex gap-3 items-center relative self-start">
           <img
             className="absolute w-4 left-6 top-1/2 transform -translate-y-1/2"
             src={assets.search_icon}
@@ -281,78 +241,128 @@ const Orders = ({ token }) => {
           />
         </div>
       </div>
-
-      {/* Orders Display */}
-      <div>
+      {/* Orders List */}
+      <div className="max-w-full mt-4">
         {filteredOrders.map((order, index) => (
           <div
             key={index}
-            className="grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr] lg:grid-cols-[0.5fr_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-xs sm:text-md text-gray-700"
+            className="flex flex-col gap-4 border-2 border-gray-200 p-5 md:p-8 my-3 text-xs sm:text-sm md:text-base text-gray-700 bg-white rounded-md shadow-sm"
           >
-            <img
-              src={assets.parcel_icon}
-              alt=""
-              className="w-12 object-cover"
-            />
-            <div>
-              <div>
-                {order.items.map((item, idx) => (
-                  <p className="py-0.5" key={idx}>
-                    {item.name} X {item.quantity} <span>{item.size}</span>
-                    {idx !== order.items.length - 1 && ","}
+            {/* Header: Image and Basic Info */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <img
+                src={assets.parcel_icon}
+                alt="Parcel"
+                className="w-12 object-cover"
+              />
+              <div className="flex-1">
+                <p className="mt-3 font-medium">
+                  {order.address.firstName + " " + order.address.lastName}
+                </p>
+                <div>
+                  <p>
+                    {order.address.street}, {order.address.city}
                   </p>
+                  <p>
+                    {order.address.state}, {order.address.country},{" "}
+                    {order.address.zipcode}
+                  </p>
+                </div>
+                <p>Phone: {order.address.phone}</p>
+              </div>
+              <div className="flex flex-wrap gap-2 self-start flex-col">
+                {order.items.map((item, idx) => (
+                  <span key={idx} className="text-sm">
+                    {item.name} x {item.quantity} ({item.size})
+                  </span>
                 ))}
               </div>
-              <p className="mt-3 mb-2 font-medium">
-                {order.address.firstName + " " + order.address.lastName}
-              </p>
+            </div>
+
+            {/* Stepper */}
+            <div className="flex items-center justify-between w-full mt-4">
+              {stepperSteps.map((step, idx) => {
+                const isActive = step === order.status;
+                const isCompleted =
+                  stepperSteps.indexOf(order.status) > idx;
+
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center flex-1 relative"
+                  >
+                    <div
+                      className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${
+                        isCompleted
+                          ? "bg-green-500 border-green-500 text-white"
+                          : isActive
+                          ? "bg-yellow-400 border-yellow-400 text-white"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      {idx + 1}
+                    </div>
+                    {idx < stepperSteps.length - 1 && (
+                      <div
+                        className={`flex-1 h-1 ${
+                          isCompleted ? "bg-green-500" : "bg-gray-300"
+                        }`}
+                      ></div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer: Payment and Status */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4">
               <div>
-                <p>{order.address.street + ","}</p>
+                <p>Items: {order.items.length}</p>
+                <p>Method: {order.paymentMethod}</p>
                 <p>
-                  {order.address.city +
-                    ", " +
-                    order.address.state +
-                    ", " +
-                    order.address.country +
-                    ", " +
-                    order.address.zipcode}
+                  Payment:{" "}
+                  {order.paymentStatus === "success"
+                    ? "Done"
+                    : order.paymentStatus === "failed"
+                    ? "Failed"
+                    : "Pending"}
                 </p>
+                <p>Date: {new Date(order.date).toLocaleDateString()}</p>
               </div>
-              <p>{order.address.phone}</p>
+
+              <div className="text-lg font-bold">
+                {currency}
+                {order.amount}
+              </div>
+
+              <div className="flex flex-col items-start sm:items-center gap-2">
+                <select
+                  onChange={(event) => statusHandler(event, order._id)}
+                  value={order.status}
+                  className="p-2 font-semibold border rounded-md"
+                >
+                  <option value={order.status}>{order.status}</option>
+                  {statusFlow[order.status].map((nextStatus) => (
+                    <option key={nextStatus} value={nextStatus}>
+                      {nextStatus}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex items-center gap-2 self-start">
+                  <p
+                    className={`w-3 h-3 rounded-full ${
+                      order.status === "Delivered"
+                        ? "bg-green-500"
+                        : order.status === "Cancelled"
+                        ? "bg-red-500"
+                        : "bg-yellow-500"
+                    }`}
+                  ></p>
+                  <p>{order.status}</p>
+                </div>
+              </div>
             </div>
-
-            <div>
-              <p className="text-sm sm:text-[15px]">
-                Items: {order.items.length}
-              </p>
-              <p className="mt-3">Method: {order.paymentMethod}</p>
-             <p>
-  Payment: {order.paymentStatus === "success" 
-              ? "Done" 
-              : order.paymentStatus === "failed" 
-              ? "Failed" 
-              : "Pending"}
-</p>
-
-              <p>Date: {new Date(order.date).toLocaleDateString()}</p>
-            </div>
-
-            <p className="text-sm sm:text-[15px]">
-              {currency}
-              {order.amount}
-            </p>
-
-            <select 
-              onChange={(event) => statusHandler(event, order._id)}
-              value={order.status}
-              className="p-2 font-semibold"
-            >
-              <option value="Order Placed">Order Placed</option>
-              <option value="Packing">Packing</option>
-              <option value="Shipped">Shipped</option>
-              <option value="Out for delivery">Out for delivery</option>
-              <option value="Delivered">Delivered</option>
-            </select>
           </div>
         ))}
       </div>
