@@ -47,15 +47,65 @@ const orderSchema = new mongoose.Schema({
     enum: ['user', 'admin', 'system', null],
     default: null
   },
-  cancelledAt: { 
-    type: Date, 
-    default: null 
+  deliveryCharge: {
+    type: Number,
+    default: 100
   },
-  cancellationReason: { 
-    type: String, 
-    default: '' 
+ riderId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User", // because rider is in UserModel
+  default: null
+},
+expiresAt: {
+  type: Date,
+  default: null // only set when assigning rider or pushing notification.
+},
+isActive: {
+  type: Boolean,
+  default: true // true if order is active, false if cancelled or completed
+}
+,
+pickUpLocation: {
+  type: {
+    lat: { type: Number, default: null },
+    lng: { type: Number, default: null }
+  },
+  default: {
+    lat: 21.1676,
+    lng: 72.8149
   }
-});
+},
+pickUpAddress: {
+  type: Object,
+  default: {
+  street: "Swaminarayan",
+  city: "Surat",
+  state: "Gujarat",
+  pincode: "121212",
+  country: "India"
+  }
+},
+distanceFromPickUpLocation: {
+  type: Number,
+  default: 0 // in kilometers, can be updated later
+},
+distanceFromDeliveryLocation: {
+  type: Number,
+  default: 0 // in kilometers, can be updated later
+},
+otpExpiresAt: {
+  type: Date,
+  default: null // only set when sending delivery OTP
+},
+deliveryOtp : {
+  type: String
+},
+earning: {
+  amount: { type: Number, default: 0 }, // What the rider earned for this delivery
+  collected: { type: Number, default: 0 }, // If COD, what rider collected from customer
+}
+
+}, { minimize: false, timestamps: true });
 
 // ✅ Add this: Compound index on paymentStatus and status
 orderSchema.index({ paymentStatus: 1, status: 1 });

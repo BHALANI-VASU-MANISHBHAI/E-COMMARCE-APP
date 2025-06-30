@@ -1,5 +1,5 @@
 import express from 'express';
-import {  addProduct,listProducts,removeProduct,singleProduct,updateProduct,getLowStockProduct,MostSellerToday } from '../controllers/productController.js';
+import { getBestSellers, addProduct,listProducts,removeProduct,singleProduct,updateProduct,getLowStockProduct,MostSellerToday } from '../controllers/productController.js';
 import upload from '../middleware/multer.js';
 import adminAuth from '../middleware/adminAuth.js';
 const productRouter = express.Router();
@@ -22,5 +22,6 @@ productRouter.post('/update/:id', adminAuth, upload.fields([
   { name: 'image4', maxCount: 1 }
 ]), updateProduct);  
 productRouter.get('/getLowStock',adminAuth,getLowStockProduct);
-productRouter.get('/mostSellerToday',adminAuth,MostSellerToday);
+productRouter.get('/mostSellerToday', MostSellerToday);
+productRouter.get('/bestsellers', getBestSellers); // Get best-selling products
 export default productRouter;

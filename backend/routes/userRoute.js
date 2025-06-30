@@ -4,6 +4,7 @@ import { loginUser,registerUser,adminLogin,getUserById ,UpdateProfile,googleAuth
 import authUser from '../middleware/auth.js';
 import upload from '../middleware/multer.js';
 import adminAuth from '../middleware/adminAuth.js';
+import restrictToRole from '../middleware/restrictToRole.js';
 
 
 
@@ -13,10 +14,10 @@ userRouter.post('/register', registerUser);
 userRouter.post('/login', loginUser);
 userRouter.post('/admin', adminLogin);
 userRouter.post('/google', googleAuth);
-userRouter.post('/getdataofuser', authUser,getUserById);
-userRouter.put('/updateprofile', authUser, upload.single("profileImage"),
+userRouter.post('/getdataofuser', restrictToRole('user','rider'),getUserById);
+userRouter.put('/updateprofile', restrictToRole('user','rider'), upload.single("profileImage"),
  UpdateProfile);
-userRouter.post('/getuserbyid/:id', authUser, getUserById); 
+userRouter.post('/getuserbyid/:id', restrictToRole('user'), getUserById); 
 userRouter.get('/totalusers',adminAuth,getTotalCustomers);
 
 export default userRouter;

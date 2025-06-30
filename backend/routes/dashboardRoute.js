@@ -1,16 +1,17 @@
 
 import express from 'express';
-import { getTotalRevenue, getTotalOrders,getTotalCustomers ,MostSellerToday,getTotalRevenueByRange,getProfitByRange,getCostByRange,getOrdersByRange} from '../controllers/dashboardController.js';
+import {getMostSellingProductsByRange, getTotalRevenue, getTotalOrders,getTotalCustomers ,MostSellerToday,getTotalRevenueByRange,getProfitByRange,getCostByRange,getOrdersByRange} from '../controllers/dashboardController.js';
 
-const router = express.Router();
+const dashboardRouter = express.Router();
 
-router.get('/totalRevenue', getTotalRevenue);
-router.get('/totalOrders', getTotalOrders);
-router.get('/totalCustomers', getTotalCustomers);
-router.get('/mostSellerToday', MostSellerToday);
-router.get('/totalRevenueByRange', getTotalRevenueByRange);
-router.get('/getProfitByRange', getProfitByRange);
-router.get('/getCostByRange', getCostByRange);
-router.get('/getOrdersByRange', getOrdersByRange);
-export default router;
+dashboardRouter.get('/totalRevenue', getTotalRevenue);
+dashboardRouter.get('/totalOrders', getTotalOrders);
+dashboardRouter.get('/totalCustomers', getTotalCustomers);
+dashboardRouter.get('/mostSellerToday', MostSellerToday);
+dashboardRouter.get('/totalRevenueByRange', getTotalRevenueByRange);
+dashboardRouter.get('/getProfitByRange', getProfitByRange);
+dashboardRouter.get('/getCostByRange', getCostByRange);
+dashboardRouter.get('/getOrdersByRange', getOrdersByRange);
+dashboardRouter.get('/getMostSellingProductsByRange', getMostSellingProductsByRange);
+export default dashboardRouter;
 

@@ -17,8 +17,8 @@ const createdToken = (id, role) => {
 const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
-
-        const user = await userModel.findOne({ email });
+        
+        const user = await userModel.findOne({ email  });
 
         if (!user) {
             return res.json({ message: "User not found" });
@@ -42,7 +42,8 @@ const loginUser = async (req, res) => {
 // route for user registration
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password ,role} = req.body;
+        console.log("Received registration data:",req.body);
         console.log("Registering user:", { name, email, password });
         const exist = await userModel.findOne({ email });
         if (exist) {
@@ -69,7 +70,7 @@ const registerUser = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            role: "user",
+            role: role || "user", // Default to 'user' if no role is provided
         });
 
         const user = await newUser.save();
@@ -120,27 +121,32 @@ const UpdateProfile = async (req, res) => {
     try {
         const userId = req.userId;
         const profileImage = req.file;
-        const { firstName, lastName, email, phone, gender } = req.body;
-
-        if (!firstName || !lastName || !email || !phone || !gender) {
-            return res.status(400).json({ success: false, message: "Please provide all required fields" });
-        }
-
+        console.log("User ID:", userId);
+        const { firstName, lastName, email, phone, gender , dateOfBirth, vehicleNumber ,available } = req.body;
+        console.log("Update Profile Data:",req.body);
+    
         let updateData = {
             firstName,
             lastName,
             email,
             phone,
             gender,
+            dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+            vehicleNumber : vehicleNumber || "",
+            available: available === 'true', // Convert string to boolean
+            riderStatus: (available === 'true' ? "available" : "offline") // Set status based on availability
         };
-
+        console.log("Update Profile Data:", updateData);
+        console.log("Profile Image:", profileImage);
         if (profileImage) {
             const result = await cloudinary.uploader.upload(profileImage.path, { resource_type: 'image' });
             updateData.profilePhoto = result.secure_url;
             console.log("Image uploaded to Cloudinary:", result.secure_url);
         }
-
+        
         const updatedUser = await userModel.findByIdAndUpdate(userId, updateData, { new: true });
+
+        console.log("Updated User:", updatedUser);
         res.json({ success: true, user: updatedUser });
 
     } catch (err) {

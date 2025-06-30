@@ -1,5 +1,6 @@
 import { storeOTP,
-    verifyOTP,resetPassword ,PhoneSentOTP, verifyPhoneOTP} from '../controllers/otpController.js';
+    verifyOTP,resetPassword ,PhoneSentOTP, verifyPhoneOTP,  sendDeliveryOtp,
+  verifyDeliveryOtp} from '../controllers/otpController.js';
 import express from 'express';
 import { Router } from 'express';
 
@@ -18,5 +19,9 @@ otpRouter.post('/reset-password', resetPassword);
 otpRouter.post('/phone-otp', PhoneSentOTP);
 // Route to verify phone OTP
 otpRouter.post('/verify-phone-otp', verifyPhoneOTP);
+// Route to send delivery OTP
+otpRouter.post('/send-delivery-otp', sendDeliveryOtp);
+// Route to verify delivery OTP
+otpRouter.post('/verify-delivery-otp', verifyDeliveryOtp);
 
 export default otpRouter;

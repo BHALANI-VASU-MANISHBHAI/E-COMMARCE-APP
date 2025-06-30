@@ -25,6 +25,7 @@ const Dashboard = ({ token }) => {
 
   const [StartDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [EndDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedRange, setSelectedRange] = useState(null);
 
   const getLowStocksProduct = async () => {
     try {
@@ -57,14 +58,29 @@ const Dashboard = ({ token }) => {
       toast.error(err.message);
     }
   };
-
-  const TotalRevenue = async () => {
+  const GetMostSellerByRanges = async () => {
     try {
-      const response = await axios.get(`${backendUrl}/api/dashboard/totalRevenue`, { headers: { token } });
+      const response = await axios.get(`${backendUrl}/api/dashboard/getMostSellingProductsByRange?startDate=${StartDate}&endDate=${EndDate}`, { headers: { token } });
+      if (response.data.success) {
+        console.log("Most seller Range ",response.data.mostSellingProducts);
+        setmostSellerToday(response.data.mostSellingProducts);
+      } else {
+        toast.error("Failed to fetch most seller products by range");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message);
+
+    }
+  };
+
+  const TotalRevenueByRange = async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/dashboard/totalRevenueByRange?startDate=${StartDate}&endDate=${EndDate}`, { headers: { token } });
       if (response.data.success) {
         setTotalRevenue(response.data.totalRevenue);
       } else {
-        toast.error("Failed to fetch total revenue");
+        toast.error("Failed to fetch total revenue by range");
       }
     } catch (err) {
       console.error(err);
@@ -72,7 +88,19 @@ const Dashboard = ({ token }) => {
     }
   };
 
-
+  const TotalOrderByRange = async () => {
+    try {
+      const response = await axios.get(`${backendUrl}/api/dashboard/getOrdersByRange?startDate=${StartDate}&endDate=${EndDate}`, { headers: { token } });
+      if (response.data.success) {
+        setTotalOrders(response.data.totalOrders);
+      } else {
+        toast.error("Failed to fetch total orders by range");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message);
+    }
+  };
 
   const TotalCustomers = async () => {
     try {
@@ -87,36 +115,6 @@ const Dashboard = ({ token }) => {
       toast.error(err.message);
     }
   };
-  const TotalRevenueByRange = async () => {
-    try {
-
-      const response = await axios.get(`${backendUrl}/api/dashboard/totalRevenueByRange?startDate=${StartDate}&endDate=${EndDate}`, { headers: { token } });
-      if (response.data.success) {
-        setTotalRevenue(response.data.totalRevenue);
-      } else {
-        toast.error("Failed to fetch total revenue by range");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.message);
-    }
-  };
-  
-  const TotalOrderByRange  = async () => {
-    try {
-      const response = await axios.get(`${backendUrl}/api/dashboard/getOrdersByRange?startDate=${StartDate}&endDate=${EndDate}`, { headers: { token } });
-      if (response.data.success) {
-        console.log("Ordersss"  ,response.data);
-        setTotalOrders(response.data.totalOrders);
-      } else {
-        toast.error("Failed to fetch total orders by range");
-      }
-    } catch (err) {
-      console.log(err);
-      toast.error(err.message);
-    }
-  };
-
 
   const getChartData = useCallback(async () => {
     try {
@@ -137,86 +135,110 @@ const Dashboard = ({ token }) => {
       toast.error(err.message);
     }
   }, [StartDate, EndDate, token]);
-const fetchAllDashboardData = useCallback(async () => {
-  await Promise.all([
-    TotalRevenueByRange(),
-    TotalOrderByRange(),
-    getChartData()
-  ]);
-}, [StartDate, EndDate, token]);
-useEffect(() => {
-  fetchAllDashboardData();
-}, [StartDate, EndDate]);
+
+  const setStartDateToPastDays = (days, label) => {
+    const today = new Date();
+    const pastDate = new Date();
+    pastDate.setDate(today.getDate() - days);
+    setStartDate(pastDate.toISOString().split('T')[0]);
+    setEndDate(today.toISOString().split('T')[0]);
+    setSelectedRange(label);
+  };
+
+  const fetchAllDashboardData = useCallback(async () => {
+    await Promise.all([
+      TotalRevenueByRange(),
+      TotalOrderByRange(),
+      getChartData()
+    ]);
+  }, [StartDate, EndDate, token, getChartData]);
+
+  useEffect(() => {
+    fetchAllDashboardData();
+    GetMostSellerByRanges();
+  }, [StartDate, EndDate, fetchAllDashboardData]);
 
   useEffect(() => {
     getLowStocksProduct();
-    getMostSellerToday();
     TotalCustomers();
   }, [token]);
-useEffect(() => {
-  const handleOrderPlaced = (data) => {
-    console.log("New order placed:", data);
-    TotalRevenueByRange();
-    TotalOrderByRange();
-    getMostSellerToday();
-  };
 
-  const handleOrderCancelled = (data) => {
-    console.log("Order cancelled:", data);
-    TotalOrderByRange();
-    TotalRevenueByRange();
-    getMostSellerToday();
-  };
+  useEffect(() => {
+    const handleOrderPlaced = () => {
+      TotalRevenueByRange();
+      TotalOrderByRange();
+      GetMostSellerByRanges();
+    };
 
-  const handleCustomerAdded = (data) => {
-    console.log("New customer added:", data);
-    TotalCustomers();
-  };
+    const handleOrderCancelled = () => {
+      TotalRevenueByRange();
+      TotalOrderByRange();
+      GetMostSellerByRanges();
+    };
 
-  socket.on("orderPlaced", handleOrderPlaced);
-  socket.on("orderCancelled", handleOrderCancelled);
-  socket.on("customerAdded", handleCustomerAdded);
+    const handleCustomerAdded = () => {
+      TotalCustomers();
+    };
 
-  return () => {
-    socket.off("orderPlaced", handleOrderPlaced);
-    socket.off("orderCancelled", handleOrderCancelled);
-    socket.off("customerAdded", handleCustomerAdded);
-  };
-}, [token, TotalRevenueByRange, TotalOrderByRange, getMostSellerToday, TotalCustomers]);
+    socket.on("orderPlaced", handleOrderPlaced);
+    socket.on("orderCancelled", handleOrderCancelled);
+    socket.on("customerAdded", handleCustomerAdded);
 
+    return () => {
+      socket.off("orderPlaced", handleOrderPlaced);
+      socket.off("orderCancelled", handleOrderCancelled);
+      socket.off("customerAdded", handleCustomerAdded);
+    };
+  }, [token, TotalRevenueByRange, TotalOrderByRange, GetMostSellerByRanges, TotalCustomers]);
 
   const displayedProducts = selectedStockType === "out" ? outOfStock : lowStock;
 
   return (
     <div className="p-5">
       {/* Date Range Inputs */}
-      <div className="flex items-start mb-5  px-4 py-2 bg-gray-200 rounded-lg flex-col md:flex-row md:justify-between md:items-center gap-4"> 
-        <div className="flex gap-3 items-center ">
+      <div className="flex flex-col gap-4 mb-5 px-4 py-4 rounded-lg md:flex-row md:justify-between md:items-center bg-gray-100 shadow-md">
+        <div className="flex flex-wrap gap-4">
+          <QuickDateButton label="Today" selected={selectedRange === "Today"} onClick={() => setStartDateToPastDays(0, "Today")} />
+          <QuickDateButton label="7D" selected={selectedRange === "7D"} onClick={() => setStartDateToPastDays(7, "7D")} />
+          <QuickDateButton label="1M" selected={selectedRange === "1M"} onClick={() => setStartDateToPastDays(30, "1M")} />
+          <QuickDateButton label="3M" selected={selectedRange === "3M"} onClick={() => setStartDateToPastDays(90, "3M")} />
+          <QuickDateButton label="6M" selected={selectedRange === "6M"} onClick={() => setStartDateToPastDays(180, "6M")} />
+          <QuickDateButton label="1Y" selected={selectedRange === "1Y"} onClick={() => setStartDateToPastDays(365, "1Y")} />
+        </div>
+
+        <div className="flex gap-3 items-center">
           <p>Start Date</p>
           <input
             type="date"
             value={StartDate}
             min={new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split("T")[0]}
             max={EndDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              setSelectedRange(null);
+            }}
             className="border border-gray-300 rounded px-2 py-1"
           />
         </div>
+
         <div className="flex gap-4 items-center">
           <p>End Date</p>
           <input
             type="date"
             value={EndDate}
             min={StartDate}
-            max ={new Date().toISOString().split("T")[0]}
-            onChange={(e) => setEndDate(e.target.value)}
+            max={new Date().toISOString().split("T")[0]}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              setSelectedRange(null);
+            }}
             className="border border-gray-300 rounded px-2 py-1"
           />
         </div>
       </div>
 
       {/* Cards Section */}
-      <div className="flex flex-row gap-7 ">
+      <div className="flex flex-row gap-7">
         <div className="flex md:gap-10 sm:gap-3 w-full flex-col md:flex-row gap-8">
           <DashboardCard title="Total Revenue" value={`₹${totalRevenue.toFixed(2)}`} />
           <DashboardCard title="Total Orders" value={`${totalOrders} Orders`} />
@@ -277,7 +299,6 @@ useEffect(() => {
   );
 };
 
-// 🔥 Components for Reusability
 const DashboardCard = ({ title, value }) => (
   <div className="flex flex-col gap-3 bg-white p-5 rounded-lg shadow-md w-full sm:w-[90%] md:w-[30%]">
     <div className="flex gap-5 items-center justify-between">
@@ -326,6 +347,15 @@ const StockItem = ({ item, selectedStockType, navigate }) => (
       Edit
     </p>
   </div>
+);
+
+const QuickDateButton = ({ label, onClick, selected }) => (
+  <button
+    className={`px-3 py-1 rounded cursor-pointer ${selected ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+    onClick={onClick}
+  >
+    {label}
+  </button>
 );
 
 export default Dashboard;

@@ -40,11 +40,11 @@ const addSubscriber = async (req, res) => {
 const checkSubscriber = async (req, res) => {
   try {
     const { email } = req.body;
-    console.log("Checking subscriber with email:", email);
+    
     // Check if already subscribed
     const existing = await Subscriber
       .findOne({ email });
-    console.log("Existing subscriber:", existing);
+    
     if (existing) {
       return res.json({ success: true, message: "Already subscribed.", email: existing.email });
     }

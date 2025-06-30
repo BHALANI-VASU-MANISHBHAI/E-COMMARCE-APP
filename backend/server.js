@@ -16,6 +16,7 @@ import reviewRouter from './routes/reviewRoute.js';
 import SubscriberRoute from './routes/subscriberRoute.js';
 import otpRouter from './routes/otpRoute.js';
 import dashboardRouter from './routes/dashBoardRoute.js';
+import riderRouter from './routes/riderRoute.js';
 // App Config
 dotenv.config();
 const app = express();
@@ -23,7 +24,7 @@ const PORT = process.env.PORT || 4000;
 connectDB();
 cloudinary();
 
-// Create HTTP server and attach Socket.IO
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
@@ -32,15 +33,15 @@ const io = new Server(httpServer, {
   }
 });
 
-// Middleware
+
 app.use(compression({ threshold: 0 }));
 app.use(cors());
 app.use(express.json());
 
-// Attach io to app so it can be accessed in routes/controllers
+
 app.set('io', io);
 
-// API endpoints
+
 app.use('/api/user', userRouter);
 app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
@@ -49,6 +50,8 @@ app.use('/api/review', reviewRouter);
 app.use('/api/subscriber', SubscriberRoute);
 app.use('/api/auth', otpRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/rider', riderRouter);
+
 
 app.get('/', (req, res) => {
   res.send('Hello World');
@@ -89,14 +92,44 @@ socket.on('leaveStockRoom', () => {
   console.log('User left stockRoom:', socket.id);
   socket.leave('stockRoom');
 });
+  socket.on("joinRiderRoom", (riderId) => {
+    console.log(`Rider ${riderId} joined riderRoom`);
+    socket.join("riderRoom");
+  });
 
+  socket.on("leaveRiderRoom", (riderId) => {
+    console.log(`Rider ${riderId} left riderRoom`);
+    socket.leave("riderRoom");
+  });
+
+  socket.on("joinSingleRiderRoom", (riderId) => {
+    console.log(`Rider ${riderId} joined single room`);
+    socket.join(`riderRoom-${riderId}`);
+  });
+
+  socket.on("leaveSingleRiderRoom", (riderId) => {
+    console.log(`Rider ${riderId} left single room`);
+    socket.leave(`riderRoom-${riderId}`);
+  });
+
+  socket.on('joinStockRoom', () => {
+    console.log('User joined stockRoom:', socket.id);
+    socket.join('stockRoom');
+  });
+  
+  socket.on('leaveStockRoom', () => {
+    console.log('User left stockRoom:', socket.id);
+    socket.leave('stockRoom');
+  });
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
+
+
 });
 
 
 // Start the HTTP server (not app.listen)
-httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is running on http://0.0.0.0:${PORT}`);
 });

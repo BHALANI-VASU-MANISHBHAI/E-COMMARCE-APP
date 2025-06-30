@@ -278,6 +278,20 @@ const MostSellerToday = async (req, res) => {
   }
 };
 
+const getBestSellers = async (req, res) => {
+  try {
+    const bestSellers = await productModel.find({}).sort({ totalSales: -1 }).limit(10);
+    console.log("Best Sellers:", bestSellers);
+    res.json({
+      success: true,
+      products: bestSellers,
+    });
+  } catch (error) {
+    console.error("Best Seller fetch error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch best sellers" });
+  }
+};
+
 export {
   addProduct,
   listProducts,
@@ -286,4 +300,5 @@ export {
   updateProduct,
   getLowStockProduct,
   MostSellerToday,
+  getBestSellers
 };

@@ -40,6 +40,13 @@ const SidebarAnimation = () => {
             <img className="w-5 h-5" src={assets.order_icon} alt="" />
             <p>Orders</p>
           </NavLink>
+          <NavLink
+            className="flex items-center gap-3 border border-gray-300 px-2 py-1 rounded"
+            to="/dashboard"
+          >
+            <img className="w-5 h-5" src={assets.dashboard_icon} alt="" />
+            <p>Dashboard</p>
+          </NavLink>
         </div>
       </div>
     </>

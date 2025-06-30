@@ -56,6 +56,45 @@ const MostSellerToday = async (req, res) => {
     }
 };
 
+const getMostSellingProductsByRange = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        if (!startDate || !endDate) {
+            return res.status(400).json({ success: false, message: "Date range required." });
+        }   
+        const { start, end } = formatDateRange(startDate, endDate);
+        const orders = await orderModel.find({
+            date: { $gte: start, $lte: end },
+            status: { $ne: 'Cancelled' }
+        });
+        const productSalesMap = {};
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                if (productSalesMap[item._id]) {
+                    productSalesMap[item._id].quantity += item.quantity;
+                } else {
+                    productSalesMap[item._id] = {
+                        productId: item._id,
+                        name: item.name,
+                        image: item.image,
+                        category: item.category,
+                        quantity: item.quantity
+                    };
+                }
+            });
+        });
+        const sortedProducts = Object.values(productSalesMap).sort((a, b) => b.quantity - a.quantity);
+        res.json({
+            success: true,
+            mostSellingProducts: sortedProducts.slice(0, 5)
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Error fetching most selling products' });
+    }
+};
+
+
 const getTotalRevenue = async (req, res) => {
     try {
         const totalRevenueData = await orderModel.aggregate([
@@ -224,5 +263,6 @@ export {
     getTotalRevenueByRange,
     getProfitByRange,
     getCostByRange,
-    getOrdersByRange
+    getOrdersByRange,
+    getMostSellingProductsByRange
 };

@@ -4,6 +4,7 @@ import { sendOtpEmail } from "../services/emailService.js";
 import UserModel from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import axios from "axios";
+import OrderModel from "../models/orderModel.js";
 const TWOFACTOR_API_KEY = process.env.TWOFACTOR_API_KEY;
 async function storeOTP(req, res) {
   try {
@@ -125,4 +126,54 @@ const verifyPhoneOTP = async (req, res) => {
 }
 
 
-export { storeOTP, verifyOTP, resetPassword , PhoneSentOTP, verifyPhoneOTP };
+
+const sendDeliveryOtp = async (req, res) => {
+  const { orderId } = req.body;
+  console.log("Sending delivery OTP for order:", orderId);
+  const order = await OrderModel.findById(orderId);
+  if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+  const customerEmail = order.address.email;
+  if (!customerEmail) return res.status(400).json({ success: false, message: "No customer email found" });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  console.log("Generated OTP:", otp);
+  order.deliveryOtp = otp;
+  order.otpExpiresAt = Date.now() + 10 * 60 * 1000;
+  await order.save();
+
+  try {
+    await sendOtpEmail(customerEmail, otp);
+    return res.status(200).json({ success: true, message: "OTP sent to customer's email" });
+  } catch (err) {
+    console.error("Email error:", err);
+    return res.status(500).json({ success: false, message: "Failed to send OTP" });
+  }
+};
+
+const verifyDeliveryOtp = async (req, res) => {
+  const { orderId, otp } = req.body;
+
+  const order = await OrderModel.findById(orderId);
+  if (!order) return res.status(404).json({ success: false, message: "Order not found" });
+
+  const isExpired = Date.now() > order.otpExpiresAt;
+  if (isExpired) {
+    return res.status(400).json({ success: false, message: "OTP expired" });
+  }
+
+  if (order.deliveryOtp !== otp) {
+    return res.status(400).json({ success: false, message: "Invalid OTP" });
+  }
+
+  order.status = "Delivered";
+  order.isActive = false;
+  order.deliveryOtp = null; // Clear OTP after successful verification
+  order.otpExpiresAt = null; // Clear expiration time
+  order.earning.collected = order.amount; // Mark earnings as collected
+  await order.save();
+
+  return res.status(200).json({ success: true, message: "OTP verified, order marked as delivered" });
+};
+
+export { storeOTP, verifyOTP, resetPassword , PhoneSentOTP, verifyPhoneOTP, sendDeliveryOtp, verifyDeliveryOtp };

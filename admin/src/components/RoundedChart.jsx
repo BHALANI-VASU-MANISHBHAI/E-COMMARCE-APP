@@ -55,6 +55,7 @@ const RoundedChart = React.memo(({ data }) => {
     return (
         <div className='border-2 border-gray-300 rounded-lg p-5 shadow-md bg-white mt-10 text-center flex flex-col sm:justify-center'>
             <div className='w-[200px] h-[200px] sm:w-[250px] sm:h-[250px] md:w-[300px] md:h-[300px] mx-auto'>
+                <h1>Net Profit vs Cost </h1>
                 <ResponsiveContainer>
                     <PieChart>
                         <Pie
@@ -76,7 +77,7 @@ const RoundedChart = React.memo(({ data }) => {
             </div>
 
             {/* ✅ Dynamic Legend */}
-            <div className='flex gap-6 mt-5 flex-col md:flex-row items-center justify-center'>
+            <div className='flex gap-6 mt-5 flex-row items-center justify-center'>
                 {data.map((entry, index) => (
                     <div key={index} className='flex items-center gap-2'>
                         <div className='w-3 h-3 rounded-full' style={{ backgroundColor: entry.color }}></div>

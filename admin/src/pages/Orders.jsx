@@ -22,15 +22,9 @@ const Orders = ({ token }) => {
   const [openStatus, setOpenStatus] = useState(false);
   const [openPaymentStatus, setOpenPaymentStatus] = useState(false);
 
-  const statusFlow = {
-    "Order Placed": ["Packing"],
-    Packing: ["Shipped"],
-    Shipped: ["Out for delivery"],
-    "Out for delivery": ["Delivered"],
-    Delivered: [],
-  };
+  const allStatusSteps = ["Order Placed", "Packing", "Shipped", "Out for delivery", "Delivered"];
 
-  const stepperSteps = ["Order Placed", "Packing", "Shipped", "Out for delivery", "Delivered"];
+  const stepperSteps = allStatusSteps;
 
   const statusHandler = async (event, orderId) => {
     try {
@@ -69,7 +63,7 @@ const Orders = ({ token }) => {
 
     if (paymentStatus !== "All") {
       filtered = filtered.filter(
-        (order) => paymentStatus === "pending" || paymentStatus === "success"
+        (order) => order.paymentStatus === paymentStatus
       );
     }
 
@@ -93,8 +87,7 @@ const Orders = ({ token }) => {
       <h3 className="text-xl font-semibold mb-4">Orders Page</h3>
 
       {/* Filters */}
-      {/* You can keep your filter code here (unchanged) */}
-  <div className="p-4 flex flex-col lg:flex-row md:items-center md:justify-between gap-4 border border-gray-200 bg-gray-100 rounded-b-md">
+      <div className="p-4 flex flex-col lg:flex-row md:items-center md:justify-between gap-4 border border-gray-200 bg-gray-100 rounded-b-md">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Category Filter */}
           <div className="flex items-center gap-2 relative">
@@ -241,6 +234,7 @@ const Orders = ({ token }) => {
           />
         </div>
       </div>
+
       {/* Orders List */}
       <div className="max-w-full mt-4">
         {filteredOrders.map((order, index) => (
@@ -248,7 +242,7 @@ const Orders = ({ token }) => {
             key={index}
             className="flex flex-col gap-4 border-2 border-gray-200 p-5 md:p-8 my-3 text-xs sm:text-sm md:text-base text-gray-700 bg-white rounded-md shadow-sm"
           >
-            {/* Header: Image and Basic Info */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
               <img
                 src={assets.parcel_icon}
@@ -283,14 +277,10 @@ const Orders = ({ token }) => {
             <div className="flex items-center justify-between w-full mt-4">
               {stepperSteps.map((step, idx) => {
                 const isActive = step === order.status;
-                const isCompleted =
-                  stepperSteps.indexOf(order.status) > idx;
+                const isCompleted = stepperSteps.indexOf(order.status) > idx;
 
                 return (
-                  <div
-                    key={idx}
-                    className="flex items-center flex-1 relative"
-                  >
+                  <div key={idx} className="flex items-center flex-1 relative">
                     <div
                       className={`w-8 h-8 flex items-center justify-center rounded-full border-2 ${
                         isCompleted
@@ -314,7 +304,7 @@ const Orders = ({ token }) => {
               })}
             </div>
 
-            {/* Footer: Payment and Status */}
+            {/* Footer */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-4">
               <div>
                 <p>Items: {order.items.length}</p>
@@ -341,12 +331,12 @@ const Orders = ({ token }) => {
                   value={order.status}
                   className="p-2 font-semibold border rounded-md"
                 >
-                  <option value={order.status}>{order.status}</option>
-                  {statusFlow[order.status].map((nextStatus) => (
-                    <option key={nextStatus} value={nextStatus}>
-                      {nextStatus}
-                    </option>
-                  ))}
+                  {allStatusSteps
+                    .map((statusOption) => (
+                      <option key={statusOption} value={statusOption}>
+                        {statusOption}
+                      </option>
+                    ))}
                 </select>
 
                 <div className="flex items-center gap-2 self-start">

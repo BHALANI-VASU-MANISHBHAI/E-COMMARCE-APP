@@ -12,7 +12,7 @@ const placeOrder = async (req, res) => {
     try {
         const userId = req.userId;
         const { items, amount, address } = req.body;
-
+        console.log("Order Request:", req.body);
         if (!userId || !items || !amount || !address) {
             await session.abortTransaction();
             return res.json({ success: false, message: 'All fields are required' });
@@ -94,6 +94,8 @@ const placeOrder = async (req, res) => {
             size: items[0].size,
             quantitySold: items[0].quantity
         });
+        req.app.get('io').emit('bestsellerUpdated');
+        // ✅ Emit Order Placed Event to User Room
         return res.json({ success: true, message: "Order placed successfully" });
 
     } catch (err) {
@@ -110,8 +112,9 @@ const placeOrderRazorpay = async (req, res) => {
 
     try {
         const userId = req.userId;
-        const { items, amount, address } = req.body;
-
+      
+        const { items, amount, address } = req.body.orderData;
+ 
         if (!userId || !items || !amount || !address) {
             await session.abortTransaction();
             return res.json({ success: false, message: 'All fields are required' });
@@ -155,7 +158,8 @@ const placeOrderRazorpay = async (req, res) => {
             items,
             amount,
             address,
-            status: 'Pending Payment',
+            status: 'Order Placed',
+            paymentStatus: 'pending',
             paymentMethod: 'Online',
             payment: {
                 method: 'razorpay',
@@ -282,9 +286,14 @@ const updatedStatus = async (req, res) => {
     if (!updatedOrder) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
-
+      console.log("Updated order:", updatedOrder.status);
+    if( updatedOrder.status === 'Packing') {
+      // Notify admin when order is packed
+      req.app.get('io').to('riderRoom').emit('orderPacked', { orderId: updatedOrder._id});
+    }
     // if it is deliverd then update the quantity
     if(updatedOrder.status=='Delivered'){
+       req.app.get('io').to('riderRoom').emit('orderPacked', { orderId: updatedOrder._id});
     }
 
     console.log("Updated order status to:", status);
@@ -409,6 +418,7 @@ const cancelAllOrders = async (req, res) => {
     // Emit bulk cancellation event
     req.app.get('io').to('adminRoom').emit('AllOrderCancelled', { userId, message: "All orders cancelled by user" });
     req.app.get('io').to(userId.toString()).emit('AllOrderCancelled', { message: "All orders cancelled" });
+    // Notify user
 
     res.json({ success: true, message: "All orders cancelled successfully" });
 
