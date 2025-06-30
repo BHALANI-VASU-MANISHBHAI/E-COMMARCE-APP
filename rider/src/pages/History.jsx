@@ -136,6 +136,7 @@ useEffect(() => {
             <option value="All">All</option>
             <option value="Cancelled">Cancelled</option>
             <option value="Delivered">Delivered</option>
+            <option value="Pending">Pending</option>
           </select>
         </div>
         <div>
